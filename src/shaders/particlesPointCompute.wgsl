@@ -5,7 +5,7 @@
 @group(0) @binding(3) var<uniform> projection : mat4x4<f32>;
 @group(0) @binding(4) var<storage, read_write> mvp : array<mat4x4<f32>>;
 
-const size = u32(256);
+const size = u32(128);
 @compute @workgroup_size(size)
 fn main(
   @builtin(global_invocation_id) GlobalInvocationID : vec3<u32>,
@@ -56,4 +56,10 @@ fn main(
     modelView[index][3] = pos;
     // update mvp
     mvp[index] = projection * modelView[index];
+    // mvp[index] = mat4x4<f32>(
+    //     vec4<f32>(0,0,0,1.0),
+    //     vec4<f32>(0,0,0,1.0),
+    //     vec4<f32>(0,0,0,1.0),
+    //     vec4<f32>(0,0,0,1.0)
+    // ) * modelView[index];
 }

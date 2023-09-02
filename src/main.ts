@@ -325,6 +325,7 @@ async function run(){
   // ParticlesPoint
   // #region
   const particlesPointObj = await initParticlesPoint(device, format, particlesPointAttr.range[0]);
+  const PointAttr = {radius: 2}
   particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange(()=>{
     const particlesModelArray = new Float32Array(particlesPointAttr.range[0] * 4 * 4);
     console.time("writerBuffer Particles Point")
@@ -332,12 +333,35 @@ async function run(){
          // 生成随机的角度（0 到 2π）
         const angle = Math.random() * Math.PI * 2;
         // 生成随机的半径（0 到 5）
-        const radius = Math.random() * 2;
+        const radius = Math.random() * PointAttr.radius;
 
         const particlesPositionMatrix = mat4.identity();
         const xOffset = radius * Math.cos(angle) - 1;
-        const yOffset = (Math.random() - 0.5) * 2 * - 1;
+        const yOffset = (Math.random() - 0.5) * 0.2 * - 1;
         const zOffset = radius * Math.sin(angle)-3;
+        mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
+        particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)
+    }
+    console.timeEnd("writerBuffer Particles Point")
+    device.queue.writeBuffer(
+      particlesPointObj.particlesModelBuffer,
+      0,
+      particlesModelArray
+    )
+  });
+  particlesPoint.add(PointAttr, 'radius').min(0.2).max(2).step(0.0001).onChange(()=>{
+    const particlesModelArray = new Float32Array(particlesPointAttr.range[0] * 4 * 4);
+    console.time("writerBuffer Particles Point")
+    for( let i = 0; i < particlesPointAttr.range[0]; i++){
+         // 生成随机的角度（0 到 2π）
+        const angle = Math.random() * Math.PI * 2;
+        // 生成随机的半径（0 到 5）
+        const radius = Math.random() * PointAttr.radius;
+
+        const particlesPositionMatrix = mat4.identity();
+        const xOffset = radius * Math.cos(angle) - 1;
+        const yOffset = (Math.random() - 0.5) * 0.2 * - 1;
+        const zOffset = radius * Math.sin(angle) - 3;
         mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
         particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)
     }
@@ -353,62 +377,62 @@ async function run(){
     label: 'particlesBindingGroup',
     layout: particlesPointObj.particlesPointBindingGroupLayout,
     entries: [
+      // {
+      //   binding: 0,
+      //   resource: {
+      //     buffer: particlesPointObj.particlesModelBuffer
+      //   }
+      // },
+      // {
+      //   binding: 1,
+      //   resource: {
+      //     buffer: cameraVPMatrixBuffer
+      //   }
+      // },
       {
         binding: 0,
         resource: {
-          buffer: particlesPointObj.particlesModelBuffer
+          buffer: particlesPointObj.particlesPointMVPMatrixBuffer
+        }
+      },
+    ]
+  })
+  const particlesPointComputeBindingGroup = device.createBindGroup({
+    label: 'particlesPointComputeBindingGroup',
+    layout: particlesPointObj.computeParticlesPointBindingGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: particlesPointObj.inputBuffer
         }
       },
       {
         binding: 1,
         resource: {
+          buffer: particlesPointObj.velocityBuffer
+        }
+      },
+      {
+        binding: 2,
+        resource: {
+          buffer: particlesPointObj.particlesModelBuffer
+        }
+      },
+      {
+        binding: 3,
+        resource: {
           buffer: cameraVPMatrixBuffer
         }
       },
-      // {
-      //   binding: 0,
-      //   resource: {
-      //     buffer: particlesPointObj.particlesPointMVPMatrixBuffer
-      //   }
-      // },
+      {
+        binding: 4,
+        resource: {
+          buffer: particlesPointObj.particlesPointMVPMatrixBuffer
+        }
+      },
     ]
   })
-  // const particlesPointComputeBindingGroup = device.createBindGroup({
-  //   label: 'particlesPointComputeBindingGroup',
-  //   layout: particlesPointObj.computeParticlesPointBindingGroupLayout,
-  //   entries: [
-  //     {
-  //       binding: 0,
-  //       resource: {
-  //         buffer: particlesPointObj.inputBuffer
-  //       }
-  //     },
-  //     {
-  //       binding: 1,
-  //       resource: {
-  //         buffer: particlesPointObj.velocityBuffer
-  //       }
-  //     },
-  //     {
-  //       binding: 2,
-  //       resource: {
-  //         buffer: particlesPointObj.particlesModelBuffer
-  //       }
-  //     },
-  //     {
-  //       binding: 3,
-  //       resource: {
-  //         buffer: cameraVPMatrixBuffer
-  //       }
-  //     },
-  //     {
-  //       binding: 4,
-  //       resource: {
-  //         buffer: particlesPointObj.particlesPointMVPMatrixBuffer
-  //       }
-  //     },
-  //   ]
-  // })
   // #endregion
   
   let timeOfLastframe = performance.now();
@@ -501,12 +525,12 @@ async function run(){
       },
     };
 
+    const computePass = commandEncoder.beginComputePass()
     {
-      // const computePass = commandEncoder.beginComputePass()
-      // computePass.setPipeline(particlesPointObj.particlesPointComputePipeLine)
-      // computePass.setBindGroup(0, particlesPointComputeBindingGroup);
-      // computePass.dispatchWorkgroups(Math.ceil(particlesPointAttr.range[0] / 256))
-      // computePass.end()
+      computePass.setPipeline(particlesPointObj.particlesPointComputePipeLine)
+      computePass.setBindGroup(0, particlesPointComputeBindingGroup);
+      computePass.dispatchWorkgroups(Math.ceil(particlesPointAttr.range[0] / 128))
+      computePass.end()
     }
 
     const passEncoder = commandEncoder.beginRenderPass(skyBoxRenderPassDescriptor);
@@ -545,12 +569,11 @@ async function run(){
       passEncoder.drawIndexed(particleObj.sphereCount, NUM)
     }
     //  点粒子管线
-
     {
       passEncoder.setPipeline(particlesPointObj.particlesPointPipeLine);
       passEncoder.setVertexBuffer(0, particlesPointObj.particlesVertexBuffer);
       passEncoder.setBindGroup(0, particlesPointBindingGroup);
-      passEncoder.drawIndexed(1, particlePointNUM)
+      passEncoder.drawIndexed(1, particlesPointAttr.range[0] )
     }
     // #endregion
 
