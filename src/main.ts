@@ -9,9 +9,10 @@ import ThreeGeometryFragWGSL from "./shaders/ThreeGeometryFragWGSL.wgsl?raw"
 import ThreeGeometryVertWGSL from "./shaders/ThreeGeometryVertWGSL.wgsl?raw"
 import FlatThreeGeometryFragWGSL from "./shaders/FlatThreeGeometryFragWGSL.wgsl?raw"
 import FlatThreeGeometryVertWGSL from "./shaders/FlatThreeGeometryVertWGSL.wgsl?raw"
-import {GUIForthreeGeometry, GUIForFlatthreeGeometry, initUNIFORM}  from './util/const'
-import {stats, threeGeometryAttributes, threeGeometry, flat} from './util/GUI'
-
+import {GUIForthreeGeometry, GUIForFlatthreeGeometry, initUNIFORM, particlePointNUM}  from './util/const'
+import {stats, threeGeometryAttributes, threeGeometry, flat, particlesPoint, particlesPointAttr} from './util/GUI'
+import {initParticlesGalaxy} from './util/particlesGalaxy'
+import {initParticlesPoint} from './util/particlesPoint'
 
 async function run(){
   const canvas = document.querySelector('canvas') as HTMLCanvasElement
@@ -19,10 +20,6 @@ async function run(){
       throw new Error('No Canvas')
   const uniformBufferSize = 4 * 16; // 4x4 matrix
   const {device, context, format, size, depthTexture, depthView} = await initWebGPU(canvas)
-
-  const depthObj = {
-    depthTexture, depthView
-  }
 
   // 相机
   const camera = new Camera(canvas, Math.PI / 6, 0.1, 100000, 0.05);
@@ -33,8 +30,23 @@ async function run(){
           timeFrameDeferenceBuffer,
           flatElevationBuffer,
           flatBigWavesFrequencyBuffer,
-          cameraVPMatrixBuffer
-        } = initUNIFORM(device)
+          cameraVPMatrixBuffer,
+          cubeTextureImg,
+          particlesTextureImg,          
+        } = await initUNIFORM(device)
+
+  const cubeTexture = device.createTexture({
+    size: [canvas.width, canvas.height],
+    // size: [512, 512],
+    format,
+    // mipLevelCount:5,
+    // sampleCount:4,
+    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+  });
+  
+  const depthObj = {
+    depthTexture, depthView, cubeTexture
+  }
   // #endregion
 
   // Layout
@@ -49,7 +61,6 @@ async function run(){
   } = initLayout(device);
 
   // skybox
-  // #region
   const SkyBoxObj = await initSkyBox(
     device,
     format,
@@ -87,26 +98,10 @@ async function run(){
       },
     ]
   })
-  // const skyBoxRenderPassDescriptor: GPURenderPassDescriptor = {
-  //   colorAttachments: [
-  //     {
-  //       view: undefined, // Assigned later
-  //       loadOp: "clear",
-  //       storeOp: "store",
-  //       clearValue: { r: 0.0, g: 0, b: 0, a: 1.0 },
-  //     },
-  //   ],
-  //   depthStencilAttachment: {
-  //     view: depthObj.depthView,
-  //     depthClearValue: 1.0,
-  //     depthLoadOp: "clear",
-  //     depthStoreOp: "store",
-  //   },
-  // };
-  // #endregion
 
   // Three Geometry
   // #region
+
   // BoxGeometry CapsuleGeometry CircleGeometry ConeGeometry CylinderGeometry 
   // PlaneGeometry RingGeometry ShapeGeometry SphereGeometry TorusGeometry TorusKnotGeometry TubeGeometry
   // 调用initThreeMesh  更新ThreeGeometry 
@@ -118,7 +113,7 @@ async function run(){
              = await initThreeMesh(device,
                                   format,
                                   initThreeGeometryPipelineLayout,
-                                  'CapsuleGeometry',
+                                  'BoxGeometry',
                                   ThreeGeometryVertWGSL,
                                   ThreeGeometryFragWGSL,
                                   GUIForthreeGeometry);
@@ -136,9 +131,6 @@ async function run(){
     const updatedValues = await updateThreeMesh();
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
-    // vertexindexFromThree = updatedValues.vertexindexFromThree
-    // vertexBufferFromThree = updatedValues.vertexBufferFromThree
-    // arrayFromThreeIndexCount = updatedValues.arrayFromThreeIndexCount
   });         
       
   // 调用initThreeMesh  更新flatThreeGeometry                                                
@@ -158,27 +150,23 @@ async function run(){
             flatVertexindexFromThree,
             flatVertexBufferFromThree,
             flatArrayFromThreeIndexCount }                                                     
-};
-let { flatThreeGeometryPipeline,
-      flatVertexindexFromThree,
-      flatVertexBufferFromThree,
-      flatArrayFromThreeIndexCount }  = await updateFlatThreeMesh(); 
-// GUI flatThreeGeometry
-flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
-  const updatedValues = await updateFlatThreeMesh();
-  // 在 Promise 解决后更新变量的值
-  flatThreeGeometryPipeline = updatedValues.flatThreeGeometryPipeline
-});                      
+  };
+  let { flatThreeGeometryPipeline,
+        flatVertexindexFromThree,
+        flatVertexBufferFromThree,
+        flatArrayFromThreeIndexCount }  = await updateFlatThreeMesh(); 
+  // GUI flatThreeGeometry
+  flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
+    const updatedValues = await updateFlatThreeMesh();
+    // 在 Promise 解决后更新变量的值
+    flatThreeGeometryPipeline = updatedValues.flatThreeGeometryPipeline
+  });                      
   // 模型变换矩阵
   // #region
   // three Geometry
   const threeGeometryModelMatrix = mat4.identity();
   mat4.translate(threeGeometryModelMatrix, vec3.create(0, 0, -10),threeGeometryModelMatrix)
-  // mat4.rotateX(threeGeometryModelMatrix, Math.PI/6, threeGeometryModelMatrix)
-  // mat4.rotateY(threeGeometryModelMatrix, Math.PI/6, threeGeometryModelMatrix)
-  // mat4.rotateZ(threeGeometryModelMatrix, Math.PI/6, threeGeometryModelMatrix)
   mat4.scale(threeGeometryModelMatrix, vec3.create(1, 1, 1), threeGeometryModelMatrix)
-  // mat4.scale(threeGeometryModelMatrix, vec3.create(0.1, 0.1, 0.1), threeGeometryModelMatrix)
   const threeGeometryModelMatrixBuffer = device.createBuffer({
     label: 'threeGeometryModelMatrixBuffer',
     size: uniformBufferSize,
@@ -213,15 +201,11 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
     entries: [
       {
         binding: 0,
-        resource: {
-          buffer: vertexBufferFromThree
-        }
+        resource: cubeTexture.createView(),
       },
       {
         binding: 1,
-        resource: {
-          buffer: vertexindexFromThree
-        }
+        resource: SkyBoxObj.sampler,
       },
       {
         binding: 2,
@@ -248,18 +232,6 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
     label: 'flatThreeGeometryBindingGroup1',
     layout:initflatThreeGeometryBindingGroupLayout1,
     entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: vertexBufferFromThree
-        }
-      },
-      {
-        binding: 1,
-        resource: {
-          buffer: vertexindexFromThree
-        }
-      },
       {
         binding: 2,
         resource: {
@@ -296,14 +268,150 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
           buffer: flatBigWavesFrequencyBuffer
         }
       },
+      {
+        binding: 2,
+        resource: cubeTextureImg.createView()
+      },
     ]
   })
   // #endregion
 
   // #endregion
 
+
+  // ParticlesGalaxy
+  // #region
+  const NUM = 1;
+  const particleObj = await initParticlesGalaxy(device, canvas, format, NUM);
+  
+  const particlesBindingGroup = device.createBindGroup({
+    label: 'particlesBindingGroup',
+    layout: particleObj.particlesGalaxyBindingGroupLayout,
+    entries:[
+      {
+        binding: 0,
+        resource: {
+          buffer:particleObj.particlesModelBuffer,
+          offset: 0,
+          size: NUM * 4 * 4 * 4
+        }
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer:cameraVPMatrixBuffer,
+          offset: 0,
+          size: uniformBufferSize
+        }
+      },
+      {
+        binding: 2,
+        resource: {
+          buffer: timeFrameDeferenceBuffer
+        }
+      },
+      {
+        binding: 3,
+        resource: particlesTextureImg.createView(),
+      },
+      {
+        binding: 4,
+        resource: SkyBoxObj.sampler,
+      },
+    ]
+  })           
+  // #endregion
+  
+  // ParticlesPoint
+  // #region
+  const particlesPointObj = await initParticlesPoint(device, format, particlesPointAttr.range[0]);
+  // particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange(()=>{
+  //   const particlesModelArray = new Float32Array(particlesPointAttr.range[0] * 4 * 4);
+  //   console.time("writerBuffer Particles Point")
+  //   for( let i = 0; i < particlesPointAttr.range[0]; i++){
+  //        // 生成随机的角度（0 到 2π）
+  //       const angle = Math.random() * Math.PI * 2;
+  //       // 生成随机的半径（0 到 5）
+  //       const radius = Math.random() * 2;
+
+  //       const particlesPositionMatrix = mat4.identity();
+  //       const xOffset = radius * Math.cos(angle) - 1;
+  //       const yOffset = (Math.random() - 0.5) * 2 * - 1;
+  //       const zOffset = radius * Math.sin(angle)-3;
+  //       mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
+  //       particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)
+  //   }
+  //   console.timeEnd("writerBuffer Particles Point")
+  //   device.queue.writeBuffer(
+  //     particlesPointObj.particlesModelBuffer,
+  //     0,
+  //     particlesModelArray
+  //   )
+  // });
+
+  // const particlesPointBindingGroup = device.createBindGroup({
+  //   label: 'particlesBindingGroup',
+  //   layout: particlesPointObj.particlesPointBindingGroupLayout,
+  //   entries: [
+  //     {
+  //       binding: 0,
+  //       resource: {
+  //         buffer: particlesPointObj.particlesModelBuffer
+  //       }
+  //     },
+  //     {
+  //       binding: 1,
+  //       resource: {
+  //         buffer: cameraVPMatrixBuffer
+  //       }
+  //     },
+  //     // {
+  //     //   binding: 0,
+  //     //   resource: {
+  //     //     buffer: particlesPointObj.particlesPointMVPMatrixBuffer
+  //     //   }
+  //     // },
+  //   ]
+  // })
+  // const particlesPointComputeBindingGroup = device.createBindGroup({
+  //   label: 'particlesPointComputeBindingGroup',
+  //   layout: particlesPointObj.computeParticlesPointBindingGroupLayout,
+  //   entries: [
+  //     {
+  //       binding: 0,
+  //       resource: {
+  //         buffer: particlesPointObj.inputBuffer
+  //       }
+  //     },
+  //     {
+  //       binding: 1,
+  //       resource: {
+  //         buffer: particlesPointObj.velocityBuffer
+  //       }
+  //     },
+  //     {
+  //       binding: 2,
+  //       resource: {
+  //         buffer: particlesPointObj.particlesModelBuffer
+  //       }
+  //     },
+  //     {
+  //       binding: 3,
+  //       resource: {
+  //         buffer: cameraVPMatrixBuffer
+  //       }
+  //     },
+  //     {
+  //       binding: 4,
+  //       resource: {
+  //         buffer: particlesPointObj.particlesPointMVPMatrixBuffer
+  //       }
+  //     },
+  //   ]
+  // })
+  // #endregion
+  
   let timeOfLastframe = performance.now();
-  let i = 1;
   function frame(){    
     // 更新帧数
     stats.update()
@@ -341,9 +449,17 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
     device.queue.writeBuffer(
       threeGeometryModelMatrixBuffer, 0, threeGeometryModelMatrix
     )
-    i = i + 1;
-    if(++i % 60 == 0){        
-    }
+
+    // 根据GUI更新flat模型变换矩阵
+    const flatThreeGeometryModelMatrix = mat4.identity();
+    mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -3, -10),flatThreeGeometryModelMatrix)
+    mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
+    mat4.scale(flatThreeGeometryModelMatrix,
+               vec3.create(threeGeometryAttributes.scaleOfFlat.value[0], threeGeometryAttributes.scaleOfFlat.value[1], 0.1),
+               flatThreeGeometryModelMatrix)
+    device.queue.writeBuffer(
+      flatThreeGeometryModelMatrixBuffer, 0, flatThreeGeometryModelMatrix as Float32Array
+    )     
     // #endregion
 
     // 更新相机位置 以及 更新相机内置的canvas宽高，否则resize失效
@@ -384,8 +500,16 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
         depthStoreOp: "store",
       },
     };
-    const passEncoder = commandEncoder.beginRenderPass(skyBoxRenderPassDescriptor);
 
+    {
+      // const computePass = commandEncoder.beginComputePass()
+      // computePass.setPipeline(particlesPointObj.particlesPointComputePipeLine)
+      // computePass.setBindGroup(0, particlesPointComputeBindingGroup);
+      // computePass.dispatchWorkgroups(Math.ceil(particlesPointAttr.range[0] / 256))
+      // computePass.end()
+    }
+
+    const passEncoder = commandEncoder.beginRenderPass(skyBoxRenderPassDescriptor);
     // 天空盒管线     
     {        
       passEncoder.setPipeline(SkyBoxObj.skyBoxPipeline);
@@ -400,6 +524,7 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
       passEncoder.setVertexBuffer(0, vertexBufferFromThree);
       passEncoder.setIndexBuffer(vertexindexFromThree, 'uint16');
       passEncoder.setBindGroup(0, threeGeometryBindingGroup1);
+      passEncoder.setBindGroup(1, flatThreeGeometryBindingGroup2);
       passEncoder.drawIndexed(arrayFromThreeIndexCount)
     }
     // Three flat Geometry 管线
@@ -411,18 +536,44 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
       passEncoder.setBindGroup(1, flatThreeGeometryBindingGroup2);
       passEncoder.drawIndexed(flatArrayFromThreeIndexCount)
     }
+    //  银河粒子管线
+    {
+      passEncoder.setPipeline(particleObj.particlesGalaxyPipeLine);
+      passEncoder.setVertexBuffer(0, particleObj.particlesVertexBuffer);
+      passEncoder.setIndexBuffer(particleObj.particlesVertexIndexBuffer, 'uint16');
+      passEncoder.setBindGroup(0, particlesBindingGroup);
+      passEncoder.drawIndexed(particleObj.sphereCount, NUM)
+    }
+    //  点粒子管线
+
+    {
+      // passEncoder.setPipeline(particlesPointObj.particlesPointPipeLine);
+      // passEncoder.setVertexBuffer(0, particlesPointObj.particlesVertexBuffer);
+      // passEncoder.setBindGroup(0, particlesPointBindingGroup);
+      // passEncoder.drawIndexed(1, particlePointNUM)
+    }
     // #endregion
 
     passEncoder.end();
-    device.queue.submit([commandEncoder.finish()]);
 
+    // 将渲染结果从交换链复制到|cubeTexture|中。
+    commandEncoder.copyTextureToTexture(
+      {
+        texture: context.getCurrentTexture(),
+      },
+      {
+        texture: depthObj.cubeTexture,
+      },
+      [canvas.width, canvas.height]
+    );
+
+    device.queue.submit([commandEncoder.finish()]);
     requestAnimationFrame(frame)
   }
   frame()
 
   // re-configure context on resize
-  window.addEventListener('resize', ()=>{
-    console.log('resize');    
+  window.addEventListener('resize', ()=>{   
       size.width = canvas.width = canvas.clientWidth * devicePixelRatio
       size.height = canvas.height = canvas.clientHeight * devicePixelRatio
       
@@ -434,6 +585,7 @@ flat.add(GUIForFlatthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
         size, format: 'depth32float',
         usage: GPUTextureUsage.RENDER_ATTACHMENT,
       });
+
       depthObj.depthView = depthObj.depthTexture.createView();
   })
 }

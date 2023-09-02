@@ -100,29 +100,53 @@ export default async function initSkyBox(
         // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
         const imgSrcs = [
             new URL(
-              `../../public/img/cubemap_1/px.jpg`,
+              `../../public/img/cubemap_2/px.png`,
               import.meta.url
             ).toString(),
             new URL(
-              `../../public/img/cubemap_1/nx.jpg`,
+              `../../public/img/cubemap_2/nx.png`,
               import.meta.url
             ).toString(),
             new URL(
-              `../../public/img/cubemap_1/py.jpg`,
+              `../../public/img/cubemap_2/py.png`,
               import.meta.url
             ).toString(),
             new URL(
-              `../../public/img/cubemap_1/ny.jpg`,
+              `../../public/img/cubemap_2/ny.png`,
               import.meta.url
             ).toString(),
             new URL(
-              `../../public/img/cubemap_1/pz.jpg`,
+              `../../public/img/cubemap_2/pz.png`,
               import.meta.url
             ).toString(),
             new URL(
-              `../../public/img/cubemap_1/nz.jpg`,
+              `../../public/img/cubemap_2/nz.png`,
               import.meta.url
             ).toString(),
+            // new URL(
+            //   `../../public/img/cubemap_1/px.jpg`,
+            //   import.meta.url
+            // ).toString(),
+            // new URL(
+            //   `../../public/img/cubemap_1/nx.jpg`,
+            //   import.meta.url
+            // ).toString(),
+            // new URL(
+            //   `../../public/img/cubemap_1/py.jpg`,
+            //   import.meta.url
+            // ).toString(),
+            // new URL(
+            //   `../../public/img/cubemap_1/ny.jpg`,
+            //   import.meta.url
+            // ).toString(),
+            // new URL(
+            //   `../../public/img/cubemap_1/pz.jpg`,
+            //   import.meta.url
+            // ).toString(),
+            // new URL(
+            //   `../../public/img/cubemap_1/nz.jpg`,
+            //   import.meta.url
+            // ).toString(),
             // Cubeimg2
             // new URL(
             // `../../public/img/cubemap/posx.jpg`,

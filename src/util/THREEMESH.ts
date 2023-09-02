@@ -1,8 +1,5 @@
 import * as THREE from 'three'
 
-// const GUIThreeGeometry = {
-//     topologyIsline_list: true
-// }
 export default async function initThreeMesh(
     device:GPUDevice,
     format:GPUTextureFormat,

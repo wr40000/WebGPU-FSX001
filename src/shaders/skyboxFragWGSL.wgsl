@@ -15,4 +15,6 @@ fn main(
   //矢量的大小无关紧要。
   var cubemapVec = fragPosition.xyz - vec3(0.5);
   return textureSample(myTexture, mySampler, cubemapVec);
+  // return vec4<f32>(0.0, 0.0, 0.0, 1.0);
+    // return vec4<f32>(1.0, 1.0, 1.0, 0.5);
 }

@@ -18,7 +18,9 @@ export default async function initWebGPU(canvas: HTMLCanvasElement) {
     context.configure({
         device, format,
         // prevent chrome warning after v102
-        alphaMode: 'opaque'
+        alphaMode: 'opaque',
+        // 设置权限，可作为复制的源
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     })
     const depthTexture = device.createTexture({
       size: [canvas.width, canvas.height],
