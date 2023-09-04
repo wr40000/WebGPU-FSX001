@@ -2,6 +2,8 @@
 @binding(2) @group(0) var<uniform> modelMatrix : mat4x4<f32>;
 @binding(3) @group(0) var<uniform> viewprojectMatrix : mat4x4<f32>;
 @binding(4) @group(0) var<uniform> time : f32;
+@binding(0) @group(2) var<uniform> cameraPosition : mat4x4<f32>;
+@binding(6) @group(0) var<uniform> lightProjection : mat4x4<f32>;
 
 struct VertexOutput {
     @builtin(position) Position : vec4<f32>,

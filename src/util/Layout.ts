@@ -44,33 +44,40 @@ export default function initLayout(device: GPUDevice){
     // flat BindingGroupLayout PipelineLayout initThreeMesh
     const initflatThreeGeometryBindingGroupLayout1 = device.createBindGroupLayout({
         entries: [
-            // {
-            // binding: 1,
-            // visibility: GPUShaderStage.VERTEX,
-            // buffer: {
-            //     type: 'read-only-storage',
-            // }
-            // },
             {
-            binding: 2,
-            visibility: GPUShaderStage.VERTEX,
-            buffer: {
-                type: 'uniform',
-            }
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                buffer: {
+                    type: 'uniform',
+                }
             },
             {
-            binding: 3,
-            visibility: GPUShaderStage.VERTEX,
-            buffer: {
-                type: 'uniform',
-            }
+                binding: 1,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
             },
             {
-            binding: 4,
-            visibility: GPUShaderStage.VERTEX,
-            buffer: {
-                type: 'uniform',
-            }
+                binding: 2,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 3,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 4,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
             },
         ]
         })
@@ -94,6 +101,20 @@ export default function initLayout(device: GPUDevice){
             binding: 2,
             visibility: GPUShaderStage.FRAGMENT,
             texture:{}
+        },
+        {
+            binding: 3,
+            visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.VERTEX,
+            texture:{
+                sampleType: 'depth'
+            }
+        },
+        {
+            binding: 4,
+            visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.VERTEX,
+            sampler: {
+                type: 'comparison'
+            }
         },
     ]
     })
@@ -135,16 +156,51 @@ export default function initLayout(device: GPUDevice){
                     type: 'uniform',
                 }
             },
+            {
+                binding: 5,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 6,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+        ]
+        })
+    const initThreeGeometryBindingGroupLayout2 = device.createBindGroupLayout({
+        entries: [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
         ]
         })
     const initThreeGeometryPipelineLayout = device.createPipelineLayout({
-    bindGroupLayouts: [initThreeGeometryBindingGroupLayout,initflatThreeGeometryBindingGroupLayout2]
+    bindGroupLayouts: [initThreeGeometryBindingGroupLayout,
+                        // initThreeGeometryBindingGroupLayout2,
+                        initflatThreeGeometryBindingGroupLayout2]
     })
 
   return {
         SkyBoxBindGroupLayout,
         SkyBoxPipelineLayout,
         initThreeGeometryBindingGroupLayout,
+        initThreeGeometryBindingGroupLayout2,
         initThreeGeometryPipelineLayout,
         initflatThreeGeometryBindingGroupLayout1,
         initflatThreeGeometryBindingGroupLayout2,

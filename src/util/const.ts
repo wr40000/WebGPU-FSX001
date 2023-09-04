@@ -1,3 +1,5 @@
+import { mat4, vec2, vec3, vec4 } from "wgpu-matrix"
+
 export const GUIForthreeGeometry = {
     topologyIsline_list:true
 }
@@ -5,10 +7,7 @@ export const GUIForFlatthreeGeometry = {
     topologyIsline_list:true
 }
 
-export const particlePointNUM = 20000;
-
-// uniformBuffer
-// #region
+// #region uniformBuffer
 const uniformBufferSize = 4 * 16; // 4x4 matrix
 export async function initUNIFORM(device: GPUDevice){
     const timeFrameDeferenceBuffer = device.createBuffer({
@@ -25,10 +24,6 @@ export async function initUNIFORM(device: GPUDevice){
     })
     // 相机cameraVPMatrix矩阵
     const cameraVPMatrixBuffer = device.createBuffer({
-        size: uniformBufferSize,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-    })
-    const particlesPointMVPMatrixBuffer = device.createBuffer({
         size: uniformBufferSize,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
     })
@@ -76,14 +71,44 @@ export async function initUNIFORM(device: GPUDevice){
         );
     }
 
-
     return {timeFrameDeferenceBuffer,
         flatElevationBuffer,
         flatBigWavesFrequencyBuffer,
         cameraVPMatrixBuffer,
         cubeTextureImg,
-        particlesTextureImg,
-        particlesPointMVPMatrixBuffer                
+        particlesTextureImg,                        
     }
+}
+// #endregion
+
+// #region Light
+export async function initLight(device: GPUDevice,size:{height:number,width:number}){
+    const lightPositionBuffer = device.createBuffer({
+        label: 'GPUBuffer store 4x4 matrix',
+        size: 4 * 4, // 4 x float32: position vec4
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    })
+    const lightViewProjectionBuffer = device.createBuffer({
+        label: 'GPUBuffer for light projection',
+        size: 4 * 4 * 4, // 4 x 4 x float32
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    })
+    // dir light, 4 position
+    const lightPosition = vec3.fromValues(0, 15, -10)
+    const up = vec3.fromValues(0, 0, 1)
+    const origin = vec3.fromValues(0, 0, -10)
+    const lightViewMatrix =  mat4.lookAt(lightPosition, origin, up )
+    // mat4.invert(lightViewMatrix, lightViewMatrix)
+    const lightProjectionMatrix = mat4.perspective(Math.PI / 6, size.width / size.height, 0.01, 1000 )
+    const lightViewProjectionMatrix =mat4.multiply(lightProjectionMatrix, lightViewMatrix)
+
+    device.queue.writeBuffer(lightPositionBuffer, 0, lightPosition as Float32Array)
+    device.queue.writeBuffer(lightViewProjectionBuffer, 0, lightViewProjectionMatrix as Float32Array)
+    const lightObj = {
+        lightPositionBuffer,
+        lightViewProjectionBuffer
+    }
+
+    return lightObj
 }
 // #endregion

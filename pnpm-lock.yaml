@@ -32,6 +32,9 @@ dependencies:
   webgpu-matrix:
     specifier: ^1.0.0
     version: 1.0.0
+  wgpu-matrix:
+    specifier: ^2.5.0
+    version: 2.5.0
 
 devDependencies:
   '@types/dat.gui':
@@ -490,6 +493,10 @@ packages:
 
   /webgpu-matrix@1.0.0:
     resolution: {integrity: sha512-ZrJDZIOelyQ6KqjiLCRpPIDsxaYmDQEr/J+BFHURsTjY9F39Pj0ltIfZQX4bWZRGMHH44aCxVtPy1KcKGinfzg==}
+    dev: false
+
+  /wgpu-matrix@2.5.0:
+    resolution: {integrity: sha512-2y/yyQwEX4m00SD9U00Rdm2p+5D0vMAJqqT0zsmVD+8ndYLEA+AhL2cG99CUWBuuMddLazukBHCvL3qi1bi0nQ==}
     dev: false
 
   /wrappy@1.0.2:

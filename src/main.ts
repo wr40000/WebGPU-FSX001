@@ -1,5 +1,6 @@
 import './style.css'
-import { mat4, vec2, vec3, vec4 } from "webgpu-matrix"
+// import { mat4, vec2, vec3, vec4 } from "webgpu-matrix"
+import { mat4, vec2, vec3, vec4 } from "wgpu-matrix"
 import initWebGPU from './util/initWebGPU'
 import initSkyBox from './util/skybox'
 import Camera from './control/camera'
@@ -9,10 +10,11 @@ import ThreeGeometryFragWGSL from "./shaders/ThreeGeometryFragWGSL.wgsl?raw"
 import ThreeGeometryVertWGSL from "./shaders/ThreeGeometryVertWGSL.wgsl?raw"
 import FlatThreeGeometryFragWGSL from "./shaders/FlatThreeGeometryFragWGSL.wgsl?raw"
 import FlatThreeGeometryVertWGSL from "./shaders/FlatThreeGeometryVertWGSL.wgsl?raw"
-import {GUIForthreeGeometry, GUIForFlatthreeGeometry, initUNIFORM, particlePointNUM}  from './util/const'
+import {GUIForthreeGeometry, GUIForFlatthreeGeometry, initUNIFORM, initLight }  from './util/const'
 import {stats, threeGeometryAttributes, threeGeometry, flat, particlesPoint, particlesPointAttr} from './util/GUI'
 import {initParticlesGalaxy} from './util/particlesGalaxy'
 import {initParticlesPoint} from './util/particlesPoint'
+import initShadowDepthMap from './util/shadowDepthMap'
 
 async function run(){
   const canvas = document.querySelector('canvas') as HTMLCanvasElement
@@ -24,23 +26,19 @@ async function run(){
   // 相机
   const camera = new Camera(canvas, Math.PI / 6, 0.1, 100000, 0.05);
 
-  // uniformBuffer
-  // #region
+  // #region uniformBuffer
   const {
           timeFrameDeferenceBuffer,
           flatElevationBuffer,
           flatBigWavesFrequencyBuffer,
           cameraVPMatrixBuffer,
           cubeTextureImg,
-          particlesTextureImg,          
+          particlesTextureImg                   
         } = await initUNIFORM(device)
-
+  const lightObj = await initLight(device, size)
   const cubeTexture = device.createTexture({
     size: [canvas.width, canvas.height],
-    // size: [512, 512],
     format,
-    // mipLevelCount:5,
-    // sampleCount:4,
     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
   });
   
@@ -54,13 +52,18 @@ async function run(){
     SkyBoxBindGroupLayout,
     SkyBoxPipelineLayout,
     initThreeGeometryBindingGroupLayout,
+    initThreeGeometryBindingGroupLayout2,
     initThreeGeometryPipelineLayout,
     initflatThreeGeometryBindingGroupLayout1,
     initflatThreeGeometryBindingGroupLayout2,
     initflatThreeGeometryPipelineLayout
   } = initLayout(device);
 
-  // skybox
+  // #region 阴影图
+  const shadowDepthMapObj = await initShadowDepthMap(device, format);
+  // #endregion
+
+  // #region skybox
   const SkyBoxObj = await initSkyBox(
     device,
     format,
@@ -98,9 +101,9 @@ async function run(){
       },
     ]
   })
+  // #endregion
 
-  // Three Geometry
-  // #region
+  // #region Three Geometry
 
   // BoxGeometry CapsuleGeometry CircleGeometry ConeGeometry CylinderGeometry 
   // PlaneGeometry RingGeometry ShapeGeometry SphereGeometry TorusGeometry TorusKnotGeometry TubeGeometry
@@ -225,6 +228,18 @@ async function run(){
           buffer: timeFrameDeferenceBuffer
         }
       },
+      {
+        binding: 5,
+        resource: {
+          buffer: lightObj.lightPositionBuffer
+        }
+      },
+      {
+        binding: 6,
+        resource: {
+          buffer: lightObj.lightViewProjectionBuffer
+        }
+      },
     ]
   })
   // flat
@@ -232,6 +247,18 @@ async function run(){
     label: 'flatThreeGeometryBindingGroup1',
     layout:initflatThreeGeometryBindingGroupLayout1,
     entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: lightObj.lightPositionBuffer
+        }
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: lightObj.lightViewProjectionBuffer
+        }
+      },
       {
         binding: 2,
         resource: {
@@ -272,15 +299,21 @@ async function run(){
         binding: 2,
         resource: cubeTextureImg.createView()
       },
+      {
+        binding: 3,
+        resource: shadowDepthMapObj.shadowDepthView
+      },
+      {
+        binding: 4,
+        resource: shadowDepthMapObj.shadowDepthSampler
+      },
     ]
   })
   // #endregion
 
   // #endregion
 
-
-  // ParticlesGalaxy
-  // #region
+  // #region ParticlesGalaxy
   const NUM = 1;
   const particleObj = await initParticlesGalaxy(device, canvas, format, NUM);
   
@@ -322,77 +355,88 @@ async function run(){
   })           
   // #endregion
   
-  // ParticlesPoint
-  // #region
+  // #region ParticlesPoint
   const particlesPointObj = await initParticlesPoint(device, format, particlesPointAttr.range[0]);
   const PointAttr = {radius: 2}
-  particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange(()=>{
+  function updataParticlesPoint(e?:number){
     const particlesModelArray = new Float32Array(particlesPointAttr.range[0] * 4 * 4);
+    const particlesPointColorArray = new Float32Array(particlesPointAttr.range[0] * 4);
+    const particlesPointVelocityArray = new Float32Array(particlesPointAttr.range[0] * 4);
     console.time("writerBuffer Particles Point")
     for( let i = 0; i < particlesPointAttr.range[0]; i++){
          // 生成随机的角度（0 到 2π）
         const angle = Math.random() * Math.PI * 2;
         // 生成随机的半径（0 到 5）
-        const radius = Math.random() * PointAttr.radius;
+        const radius = Math.random() * 2;
 
         const particlesPositionMatrix = mat4.identity();
-        const xOffset = radius * Math.cos(angle) - 1;
-        const yOffset = (Math.random() - 0.5) * 0.2 * - 1;
-        const zOffset = radius * Math.sin(angle)-3;
+        const xOffset = radius * Math.cos(angle);
+        const yOffset = (Math.random() - 0.5) * 2;
+        const zOffset = radius * Math.sin(angle);
+
+        const color_r = Math.random();
+        const color_g = Math.random();
+        const color_b = Math.random();
+        const color_a = 1.0;
         mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
-        particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)
+        particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)        
+        particlesPointColorArray.set(new Float32Array([color_r,color_g,color_b,color_a]), i * 4)       
+        particlesPointVelocityArray.set(
+          new Float32Array([
+              color_r * particlesPointAttr.velocity,
+              color_g * particlesPointAttr.velocity,
+              color_b * particlesPointAttr.velocity,
+              color_a]),
+               i * 4)   
     }
     console.timeEnd("writerBuffer Particles Point")
     device.queue.writeBuffer(
       particlesPointObj.particlesModelBuffer,
       0,
       particlesModelArray
-    )
+    );
+    device.queue.writeBuffer(
+      particlesPointObj.particlesPointColorBuffer,
+      0,
+      particlesPointColorArray
+  )
+  device.queue.writeBuffer(
+      particlesPointObj.velocityBuffer,
+      0,
+      particlesPointVelocityArray
+  )
+    if(e != null && e <= 500000)
+      device.queue.writeBuffer(
+          particlesPointObj.inputBuffer,
+          0,
+          new Float32Array([e, -0.5, 0.5, -0.5, 0.5, -0.5, 0.5])
+      )
+  }
+  particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange((e)=>{
+    updataParticlesPoint(e)
   });
-  particlesPoint.add(PointAttr, 'radius').min(0.2).max(2).step(0.0001).onChange(()=>{
-    const particlesModelArray = new Float32Array(particlesPointAttr.range[0] * 4 * 4);
-    console.time("writerBuffer Particles Point")
-    for( let i = 0; i < particlesPointAttr.range[0]; i++){
-         // 生成随机的角度（0 到 2π）
-        const angle = Math.random() * Math.PI * 2;
-        // 生成随机的半径（0 到 5）
-        const radius = Math.random() * PointAttr.radius;
+  particlesPoint.add(particlesPointAttr, 'velocity').min(0.0001).max(0.005).step(0.00005).onChange(()=>{
+    updataParticlesPoint()
+  });
+  particlesPoint.add(PointAttr, 'radius').min(0.2).max(0.5).step(0.0001).onChange(()=>{
 
-        const particlesPositionMatrix = mat4.identity();
-        const xOffset = radius * Math.cos(angle) - 1;
-        const yOffset = (Math.random() - 0.5) * 0.2 * - 1;
-        const zOffset = radius * Math.sin(angle) - 3;
-        mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
-        particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)
-    }
-    console.timeEnd("writerBuffer Particles Point")
-    device.queue.writeBuffer(
-      particlesPointObj.particlesModelBuffer,
-      0,
-      particlesModelArray
-    )
+    updataParticlesPoint()
   });
 
   const particlesPointBindingGroup = device.createBindGroup({
     label: 'particlesBindingGroup',
     layout: particlesPointObj.particlesPointBindingGroupLayout,
     entries: [
-      // {
-      //   binding: 0,
-      //   resource: {
-      //     buffer: particlesPointObj.particlesModelBuffer
-      //   }
-      // },
-      // {
-      //   binding: 1,
-      //   resource: {
-      //     buffer: cameraVPMatrixBuffer
-      //   }
-      // },
       {
         binding: 0,
         resource: {
           buffer: particlesPointObj.particlesPointMVPMatrixBuffer
+        }
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: particlesPointObj.particlesPointColorBuffer
         }
       },
     ]
@@ -435,6 +479,33 @@ async function run(){
   })
   // #endregion
   
+  // #region 阴影图
+  const ShadowDepthMapBindingGroup = device.createBindGroup({
+    label: 'ShadowDepthMapBindingGroup',
+    layout: shadowDepthMapObj.shadowDepthMapBindingGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: lightObj.lightViewProjectionBuffer
+        }
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: threeGeometryModelMatrixBuffer
+        }
+      },
+      {
+        binding: 2,
+        resource: {
+          buffer: flatThreeGeometryModelMatrixBuffer
+        }
+      }
+    ]
+  })
+  // #endregion
+
   let timeOfLastframe = performance.now();
   function frame(){    
     // 更新帧数
@@ -447,8 +518,8 @@ async function run(){
     mat4.rotateY(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     mat4.rotateZ(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     
-    // 缓冲区写操作-颜色 频率
-    // #region
+    // 缓冲区写操作-颜色 频率 
+    // #region threeGeometry
     // 颜色频率
     device.queue.writeBuffer(
       timeFrameDeferenceBuffer,
@@ -471,7 +542,7 @@ async function run(){
     // 缓冲区写操作-模型变换矩阵
     // #region
     device.queue.writeBuffer(
-      threeGeometryModelMatrixBuffer, 0, threeGeometryModelMatrix
+      threeGeometryModelMatrixBuffer, 0, threeGeometryModelMatrix as Float32Array
     )
 
     // 根据GUI更新flat模型变换矩阵
@@ -486,8 +557,7 @@ async function run(){
     )     
     // #endregion
 
-    // 更新相机位置 以及 更新相机内置的canvas宽高，否则resize失效
-    // #region
+    // #region 更新相机位置 以及 更新相机内置的canvas宽高，否则resize失效
     camera.recalculateProjection(); // 更新相机内置的canvas宽高
     camera.updatePos();
     const cameraVPMatrix = mat4.create();
@@ -505,8 +575,7 @@ async function run(){
 
     const commandEncoder = device.createCommandEncoder();
     // 更新  出错  
-    // 管线
-    // #region
+    // #region 管线
     // skyBoxRenderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
     const skyBoxRenderPassDescriptor: GPURenderPassDescriptor = {
       colorAttachments: [
@@ -525,14 +594,41 @@ async function run(){
       },
     };
 
+    // 计算管线
     const computePass = commandEncoder.beginComputePass()
     {
       computePass.setPipeline(particlesPointObj.particlesPointComputePipeLine)
       computePass.setBindGroup(0, particlesPointComputeBindingGroup);
-      computePass.dispatchWorkgroups(Math.ceil(particlesPointAttr.range[0] / 128))
+      computePass.dispatchWorkgroups(Math.ceil(particlesPointAttr.range[0] / 256))
       computePass.end()
     }
 
+    // 阴影管线
+    {
+      const shadowPassDescriptor: GPURenderPassDescriptor = {
+          colorAttachments: [],
+          depthStencilAttachment: {
+              view: shadowDepthMapObj.shadowDepthView,
+              depthClearValue: 1.0,
+              depthLoadOp: 'clear',
+              depthStoreOp: 'store',
+          }
+      }
+      const shadowPass = commandEncoder.beginRenderPass(shadowPassDescriptor)
+      shadowPass.setPipeline(shadowDepthMapObj.shadowDepthMapPipeLine)
+      shadowPass.setBindGroup(0, ShadowDepthMapBindingGroup)
+      // set three Geometry vertex
+      shadowPass.setVertexBuffer(0, vertexBufferFromThree);
+      shadowPass.setIndexBuffer(vertexindexFromThree, 'uint16');
+      shadowPass.drawIndexed(arrayFromThreeIndexCount)
+
+      // set flat vertex
+      shadowPass.setVertexBuffer(0, flatVertexBufferFromThree);
+      shadowPass.setIndexBuffer(flatVertexindexFromThree, 'uint16');
+      shadowPass.drawIndexed(flatArrayFromThreeIndexCount)
+
+      shadowPass.end()
+  }
     const passEncoder = commandEncoder.beginRenderPass(skyBoxRenderPassDescriptor);
     // 天空盒管线     
     {        
@@ -549,6 +645,7 @@ async function run(){
       passEncoder.setIndexBuffer(vertexindexFromThree, 'uint16');
       passEncoder.setBindGroup(0, threeGeometryBindingGroup1);
       passEncoder.setBindGroup(1, flatThreeGeometryBindingGroup2);
+      // passEncoder.setBindGroup(2, threeGeometryBindingGroup2);
       passEncoder.drawIndexed(arrayFromThreeIndexCount)
     }
     // Three flat Geometry 管线

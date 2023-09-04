@@ -11,7 +11,7 @@ const threeGeometryAttributes = {
     gl_FragColor:vec4.create(0.5, 0.8, 1.0, 1.0),   //flat底色
     Elevation:0.2,
     uBigWavesFrequency: { value: [4, 1.5] },  //vec2.create(4, 1.5)
-    scaleOfFlat:{value: [3,3,1]}    //flat 缩放
+    scaleOfFlat:{value: [30,30,1]}    //flat 缩放
 }
 const sphereMesh = {
     radius: 0.0005,
@@ -52,7 +52,8 @@ const particlesPointAttr = {
     range: new Float32Array([10000, -5,5,-5,5,-5,5]),
     angle: Math.random() * Math.PI * 2,
     // 生成随机的半径（0 到 5）
-    radius: Math.random() * 2
+    radius: Math.random() * 2,
+    velocity: 0.001
 }
 const particlesPoint = gui.addFolder("particlesPoint")
 

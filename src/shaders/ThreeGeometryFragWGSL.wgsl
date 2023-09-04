@@ -1,6 +1,9 @@
 @binding(0) @group(0) var lastFrameTexture: texture_2d<f32>;
 @binding(1) @group(0) var mySampler: sampler;
 @binding(2) @group(1) var cubeTextureImg: texture_2d<f32>;
+@binding(3) @group(1) var shadowMap: texture_depth_2d;
+@binding(4) @group(1)  var shadowSampler: sampler_comparison;
+@binding(5) @group(0) var<uniform> lightPosition : vec4<f32>;
 
 @fragment
 fn main(

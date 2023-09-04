@@ -3,6 +3,7 @@ import particlesPointFragment from '../shaders/particlesPointFragment.wgsl?raw'
 import particlesPointCompute from '../shaders/particlesPointCompute.wgsl?raw'
 import { mat4, vec2, vec3, vec4 } from 'webgpu-matrix'
 import {particlePointNUM} from './const'
+import {particlesPointAttr} from './GUI'
 
 export async function initParticlesPoint(
     device: GPUDevice,
@@ -12,22 +13,15 @@ export async function initParticlesPoint(
 
     const particlesPointBindingGroupLayout = device.createBindGroupLayout({
         entries:[            
-            // {
-            //     binding:0,
-            //     visibility: GPUShaderStage.VERTEX,
-            //     buffer:{
-            //         type: 'read-only-storage'
-            //     }
-            // },
-            // {
-            //     binding:1,
-            //     visibility: GPUShaderStage.VERTEX,
-            //     buffer:{
-            //         type: 'uniform'
-            //     }
-            // },
             {
                 binding:0,
+                visibility: GPUShaderStage.VERTEX,
+                buffer:{
+                    type: 'read-only-storage'
+                }
+            },
+            {
+                binding:1,
                 visibility: GPUShaderStage.VERTEX,
                 buffer:{
                     type: 'read-only-storage'
@@ -76,6 +70,7 @@ export async function initParticlesPoint(
         },
         primitive: {
             topology: 'point-list',
+            // topology: 'triangle-list',            
             cullMode: 'back'
         },
         depthStencil: {
@@ -86,6 +81,7 @@ export async function initParticlesPoint(
         }
     } as GPURenderPipelineDescriptor)
     
+    // 计算管线配置
     const computeParticlesPointBindingGroupLayout = device.createBindGroupLayout({
         entries:[
             {
@@ -138,8 +134,9 @@ export async function initParticlesPoint(
             entryPoint: 'main'
         }
     })
-    const input = new Float32Array([500000, -5, 5, -5, 5, -5, 5]);
-    const velocity = vec4.create(0.05, 0.05, 0.05, 0.05) as Float32Array;
+    // 数量 x, y, z轴范围
+    // const input = new Float32Array([500000, -5, 5, -5, 5, -5, 5]);
+    const input = new Float32Array([500000, -0.5, 0.5, -0.5, 0.5, -0.5, 0.5]);
     
     // 粒子运动范围
     const inputBuffer = device.createBuffer({
@@ -151,15 +148,15 @@ export async function initParticlesPoint(
     inputBuffer.unmap();
     // 粒子速度
     const velocityBuffer = device.createBuffer({
-        size: velocity.byteLength,
+        size: 500000 * 4 * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: true
+        // mappedAtCreation: true
     })
-    new Float32Array(velocityBuffer.getMappedRange()).set(velocity);
-    velocityBuffer.unmap();
+    // new Float32Array(velocityBuffer.getMappedRange()).set(velocity);
+    // velocityBuffer.unmap();
 
     const particlePosition = new Float32Array(
-        [1,1,1,1,0,0]
+        [0,0,0,1,0,0]
     )
     const particlesVertexBuffer = device.createBuffer({
         size: 6 * 4,
@@ -169,12 +166,15 @@ export async function initParticlesPoint(
     new Float32Array(particlesVertexBuffer.getMappedRange()).set(particlePosition);
     particlesVertexBuffer.unmap();
 
-    const particlesModelArray = new Float32Array(NUM * 4 * 4);
     // 模型变换矩阵
     const particlesModelBuffer = device.createBuffer({
         size: 500000 * 4 * 4 * 4,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
     })
+
+    const particlesModelArray = new Float32Array(NUM * 4 * 4);
+    const particlesPointColorArray = new Float32Array(NUM * 4);
+    const particlesPointVelocityArray = new Float32Array(NUM * 4);
     console.time("writerBuffer Particles Point")
     for( let i = 0; i < NUM; i++){
          // 生成随机的角度（0 到 2π）
@@ -183,11 +183,24 @@ export async function initParticlesPoint(
         const radius = Math.random() * 2;
 
         const particlesPositionMatrix = mat4.identity();
-        const xOffset = radius * Math.cos(angle) - 1;
-        const yOffset = (Math.random() - 0.5) * 2 * - 1;
-        const zOffset = radius * Math.sin(angle)-3;
+        const xOffset = radius * Math.cos(angle);
+        const yOffset = (Math.random() - 0.5) * 2;
+        const zOffset = radius * Math.sin(angle);
+
+        const color_r = Math.random();
+        const color_g = Math.random();
+        const color_b = Math.random();
+        const color_a = 1.0;
         mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
         particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)        
+        particlesPointColorArray.set(new Float32Array([color_r,color_g,color_b,color_a]), i * 4)       
+        particlesPointVelocityArray.set(
+            new Float32Array([
+                color_r * particlesPointAttr.velocity,
+                color_g * particlesPointAttr.velocity,
+                color_b * particlesPointAttr.velocity,
+                color_a]),
+                i * 4)       
     }
     console.timeEnd("writerBuffer Particles Point")
     
@@ -201,6 +214,22 @@ export async function initParticlesPoint(
         0,
         particlesModelArray
     )
+    // 点粒子color矩阵
+    const particlesPointColorBuffer = device.createBuffer({
+        size: 500000 * 4 * 4,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
+    })
+    device.queue.writeBuffer(
+        particlesPointColorBuffer,
+        0,
+        particlesPointColorArray
+    )
+    device.queue.writeBuffer(
+        velocityBuffer,
+        0,
+        particlesPointVelocityArray
+    )
+  
 
     const particlesPointObj = {
         particlesPointBindingGroupLayout,
@@ -211,7 +240,8 @@ export async function initParticlesPoint(
         velocityBuffer,
         computeParticlesPointBindingGroupLayout,
         particlesPointComputePipeLine,
-        particlesPointMVPMatrixBuffer
+        particlesPointMVPMatrixBuffer,
+        particlesPointColorBuffer
     }
     return particlesPointObj
 }
