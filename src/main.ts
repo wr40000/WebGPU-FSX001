@@ -45,6 +45,18 @@ async function run(){
   const depthObj = {
     depthTexture, depthView, cubeTexture
   }
+
+  var ShadowDepthModelBuffer = device.createBuffer({
+    size: uniformBufferSize * 2 + particlesPointAttr.range[0] * uniformBufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+  })
+
+  let MSAATexture = device.createTexture({
+      size, format,
+      sampleCount: 4,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT
+  });
+  let MSAAView = MSAATexture.createView();
   // #endregion
 
   // Layout
@@ -52,7 +64,6 @@ async function run(){
     SkyBoxBindGroupLayout,
     SkyBoxPipelineLayout,
     initThreeGeometryBindingGroupLayout,
-    initThreeGeometryBindingGroupLayout2,
     initThreeGeometryPipelineLayout,
     initflatThreeGeometryBindingGroupLayout1,
     initflatThreeGeometryBindingGroupLayout2,
@@ -276,7 +287,11 @@ async function run(){
         resource: {
           buffer: timeFrameDeferenceBuffer
         }
-      },
+      },   
+      {
+        binding: 5,
+        resource: SkyBoxObj.sampler,
+      },   
     ]
   })
   const flatThreeGeometryBindingGroup2 = device.createBindGroup({
@@ -405,12 +420,13 @@ async function run(){
       0,
       particlesPointVelocityArray
   )
-    if(e != null && e <= 500000)
+    if(e != null && e <= 500000){  
       device.queue.writeBuffer(
           particlesPointObj.inputBuffer,
           0,
           new Float32Array([e, -0.5, 0.5, -0.5, 0.5, -0.5, 0.5])
-      )
+      )     
+    }
   }
   particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange((e)=>{
     updataParticlesPoint(e)
@@ -437,6 +453,32 @@ async function run(){
         binding: 1,
         resource: {
           buffer: particlesPointObj.particlesPointColorBuffer
+        }
+      },
+      {
+        binding: 2,
+        resource: {
+          buffer: lightObj.lightPositionBuffer
+        }
+      },
+      {
+        binding: 3,
+        resource: {
+          buffer: lightObj.lightViewProjectionBuffer
+        }
+      },
+      {
+        binding: 4,
+        resource: shadowDepthMapObj.shadowDepthView
+      },
+      {
+        binding: 5,
+        resource: shadowDepthMapObj.shadowDepthSampler
+      },
+      {
+        binding: 6,
+        resource: {
+          buffer: particlesPointObj.particlesModelBuffer
         }
       },
     ]
@@ -480,6 +522,7 @@ async function run(){
   // #endregion
   
   // #region 阴影图
+
   const ShadowDepthMapBindingGroup = device.createBindGroup({
     label: 'ShadowDepthMapBindingGroup',
     layout: shadowDepthMapObj.shadowDepthMapBindingGroupLayout,
@@ -487,21 +530,33 @@ async function run(){
       {
         binding: 0,
         resource: {
-          buffer: lightObj.lightViewProjectionBuffer
+          buffer: ShadowDepthModelBuffer
         }
       },
       {
         binding: 1,
         resource: {
-          buffer: threeGeometryModelMatrixBuffer
+          buffer: lightObj.lightViewProjectionBuffer
+        }
+      },
+    ]
+  })
+  const ShadowDepthMapForParticlesPointBindingGroup = device.createBindGroup({
+    label: 'ShadowDepthMapBindingGroup',
+    layout: shadowDepthMapObj.shadowDepthMapBindingGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: particlesPointObj.particlesModelBuffer
         }
       },
       {
-        binding: 2,
+        binding: 1,
         resource: {
-          buffer: flatThreeGeometryModelMatrixBuffer
+          buffer: lightObj.lightViewProjectionBuffer
         }
-      }
+      },
     ]
   })
   // #endregion
@@ -539,8 +594,7 @@ async function run(){
     )
     // #endregion
 
-    // 缓冲区写操作-模型变换矩阵
-    // #region
+    // #region 缓冲区写操作-模型变换矩阵
     device.queue.writeBuffer(
       threeGeometryModelMatrixBuffer, 0, threeGeometryModelMatrix as Float32Array
     )
@@ -555,6 +609,18 @@ async function run(){
     device.queue.writeBuffer(
       flatThreeGeometryModelMatrixBuffer, 0, flatThreeGeometryModelMatrix as Float32Array
     )     
+
+    device.queue.writeBuffer(
+      ShadowDepthModelBuffer,
+      0,
+      threeGeometryModelMatrix as Float32Array,
+    )     
+    device.queue.writeBuffer(
+      ShadowDepthModelBuffer,
+      (threeGeometryModelMatrix as Float32Array).byteLength,
+      flatThreeGeometryModelMatrix as Float32Array,
+    )      
+       
     // #endregion
 
     // #region 更新相机位置 以及 更新相机内置的canvas宽高，否则resize失效
@@ -571,6 +637,13 @@ async function run(){
       CameraVPMatrixArray.byteOffset,
       CameraVPMatrixArray.byteLength
     );
+
+    // // 灯光视角
+    // device.queue.writeBuffer(
+    //   cameraVPMatrixBuffer,
+    //   0,
+    //   lightObj.lightViewProjectionMatrix as Float32Array
+    // );
     // #endregion
 
     const commandEncoder = device.createCommandEncoder();
@@ -580,6 +653,8 @@ async function run(){
     const skyBoxRenderPassDescriptor: GPURenderPassDescriptor = {
       colorAttachments: [
         {
+          // view: MSAAView, // Assigned later
+          // resolveTarget: context.getCurrentTexture().createView(), // Assigned later
           view: context.getCurrentTexture().createView(), // Assigned later
           loadOp: "clear",
           storeOp: "store",
@@ -620,15 +695,21 @@ async function run(){
       // set three Geometry vertex
       shadowPass.setVertexBuffer(0, vertexBufferFromThree);
       shadowPass.setIndexBuffer(vertexindexFromThree, 'uint16');
-      shadowPass.drawIndexed(arrayFromThreeIndexCount)
+      shadowPass.drawIndexed(arrayFromThreeIndexCount, 1, 0, 0, 0)
 
       // set flat vertex
       shadowPass.setVertexBuffer(0, flatVertexBufferFromThree);
       shadowPass.setIndexBuffer(flatVertexindexFromThree, 'uint16');
-      shadowPass.drawIndexed(flatArrayFromThreeIndexCount)
+      shadowPass.drawIndexed(flatArrayFromThreeIndexCount, 1, 0, 0, 1)
+
+      // set Particles Point vertex
+      shadowPass.setPipeline(shadowDepthMapObj.shadowDepthMapForParticlesPointPipeLine)
+      shadowPass.setBindGroup(0, ShadowDepthMapForParticlesPointBindingGroup)
+      shadowPass.setVertexBuffer(0, particlesPointObj.particlesVertexBuffer);
+      shadowPass.drawIndexed(1, particlesPointAttr.range[0] )
 
       shadowPass.end()
-  }
+    }
     const passEncoder = commandEncoder.beginRenderPass(skyBoxRenderPassDescriptor);
     // 天空盒管线     
     {        
@@ -707,6 +788,14 @@ async function run(){
       });
 
       depthObj.depthView = depthObj.depthTexture.createView();
+
+      MSAATexture.destroy()
+      MSAATexture = device.createTexture({
+          size, format,
+          sampleCount: 4,
+          usage: GPUTextureUsage.RENDER_ATTACHMENT
+      });
+      MSAAView = MSAATexture.createView();
   })
 }
 run()

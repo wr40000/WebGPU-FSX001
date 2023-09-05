@@ -27,6 +27,41 @@ export async function initParticlesPoint(
                     type: 'read-only-storage'
                 }
             },
+            {
+                binding: 2,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 3,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 4,
+                visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.VERTEX,
+                texture:{
+                    sampleType: 'depth'
+                }
+            },
+            {
+                binding: 5,
+                visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.VERTEX,
+                sampler: {
+                    type: 'comparison'
+                }
+            },
+            {
+                binding:6,
+                visibility: GPUShaderStage.VERTEX,
+                buffer:{
+                    type: 'read-only-storage'
+                }
+            },
         ]
     })
     const particlesPointPipeLineLayout = device.createPipelineLayout({
@@ -241,6 +276,7 @@ export async function initParticlesPoint(
         computeParticlesPointBindingGroupLayout,
         particlesPointComputePipeLine,
         particlesPointMVPMatrixBuffer,
+        particlesModelArray,
         particlesPointColorBuffer
     }
     return particlesPointObj

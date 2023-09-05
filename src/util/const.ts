@@ -94,19 +94,32 @@ export async function initLight(device: GPUDevice,size:{height:number,width:numb
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     })
     // dir light, 4 position
-    const lightPosition = vec3.fromValues(0, 15, -10)
+    // const lightPosition = vec3.fromValues(0, 10, -10)
+    // const up = vec3.fromValues(0, 0, 1)
+    // const origin = vec3.fromValues(0, 0, -10)
+    const lightPosition = vec3.fromValues(0, 100, -7)
     const up = vec3.fromValues(0, 0, 1)
-    const origin = vec3.fromValues(0, 0, -10)
+    const origin = vec3.fromValues(0, 0, -7)
     const lightViewMatrix =  mat4.lookAt(lightPosition, origin, up )
     // mat4.invert(lightViewMatrix, lightViewMatrix)
     const lightProjectionMatrix = mat4.perspective(Math.PI / 6, size.width / size.height, 0.01, 1000 )
+    const lightOrthoMatrix = mat4.ortho(-40, 40, -40, 40, -50, 200);
+    // 正交投影
     const lightViewProjectionMatrix =mat4.multiply(lightProjectionMatrix, lightViewMatrix)
+    // 透视投影
+    const lightViewOrthoMatrix =mat4.multiply(lightOrthoMatrix, lightViewMatrix)
 
     device.queue.writeBuffer(lightPositionBuffer, 0, lightPosition as Float32Array)
-    device.queue.writeBuffer(lightViewProjectionBuffer, 0, lightViewProjectionMatrix as Float32Array)
+    device.queue.writeBuffer(lightViewProjectionBuffer,
+                            0,
+                            // lightViewProjectionMatrix as Float32Array
+                            lightViewOrthoMatrix as Float32Array
+                        )
     const lightObj = {
         lightPositionBuffer,
-        lightViewProjectionBuffer
+        lightViewProjectionBuffer,
+        lightViewProjectionMatrix,
+        lightViewOrthoMatrix
     }
 
     return lightObj

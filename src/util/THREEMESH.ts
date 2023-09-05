@@ -70,7 +70,10 @@ export default async function initThreeMesh(
             depthWriteEnabled: true,
             depthCompare: 'less',
             format: 'depth32float'
-        }
+        },
+        // multisample: {
+        //     count: 4,
+        // }
     } as GPURenderPipelineDescriptor)
 
     // three Geometry

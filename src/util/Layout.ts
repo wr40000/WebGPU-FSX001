@@ -3,18 +3,18 @@ export default function initLayout(device: GPUDevice){
     label: "SkyBoxBindGroupLayout",
     entries: [
         {
-        binding: 0,
-        visibility: GPUShaderStage.VERTEX,
-        buffer: {
-            type: "uniform",
-        },
+            binding: 0,
+            visibility: GPUShaderStage.VERTEX,
+            buffer: {
+                type: "uniform",
+            },
         },
         {
-        binding: 1,
-        visibility: GPUShaderStage.VERTEX,
-        buffer: {
-            type: "uniform",
-        },
+            binding: 1,
+            visibility: GPUShaderStage.VERTEX,
+            buffer: {
+                type: "uniform",
+            },
         },
         {
         binding: 2,
@@ -78,6 +78,11 @@ export default function initLayout(device: GPUDevice){
                 buffer: {
                     type: 'uniform',
                 }
+            },
+            {
+                binding: 5,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler:{}
             },
         ]
         })
@@ -172,27 +177,8 @@ export default function initLayout(device: GPUDevice){
             },
         ]
         })
-    const initThreeGeometryBindingGroupLayout2 = device.createBindGroupLayout({
-        entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                buffer: {
-                    type: 'uniform',
-                }
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.VERTEX,
-                buffer: {
-                    type: 'uniform',
-                }
-            },
-        ]
-        })
     const initThreeGeometryPipelineLayout = device.createPipelineLayout({
     bindGroupLayouts: [initThreeGeometryBindingGroupLayout,
-                        // initThreeGeometryBindingGroupLayout2,
                         initflatThreeGeometryBindingGroupLayout2]
     })
 
@@ -200,7 +186,6 @@ export default function initLayout(device: GPUDevice){
         SkyBoxBindGroupLayout,
         SkyBoxPipelineLayout,
         initThreeGeometryBindingGroupLayout,
-        initThreeGeometryBindingGroupLayout2,
         initThreeGeometryPipelineLayout,
         initflatThreeGeometryBindingGroupLayout1,
         initflatThreeGeometryBindingGroupLayout2,

@@ -4,6 +4,7 @@ import Stats from 'three/examples/jsm/libs/stats.module.js'
 // GUI
 
 const gui = new dat.GUI();
+gui.close()
 gui.width = 150
 const threeGeometryAttributes = {
     rotateSpeed:100,    //threeGeometry转速
