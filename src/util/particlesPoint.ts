@@ -2,7 +2,6 @@ import particlesPointVertex from '../shaders/particlesPointVertex.wgsl?raw'
 import particlesPointFragment from '../shaders/particlesPointFragment.wgsl?raw'
 import particlesPointCompute from '../shaders/particlesPointCompute.wgsl?raw'
 import { mat4, vec2, vec3, vec4 } from 'webgpu-matrix'
-import {particlePointNUM} from './const'
 import {particlesPointAttr} from './GUI'
 
 export async function initParticlesPoint(

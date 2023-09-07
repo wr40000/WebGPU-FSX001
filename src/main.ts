@@ -1,6 +1,5 @@
 import './style.css'
-// import { mat4, vec2, vec3, vec4 } from "webgpu-matrix"
-import { mat4, vec2, vec3, vec4 } from "wgpu-matrix"
+import { mat4, vec3, vec4 } from "wgpu-matrix"
 import initWebGPU from './util/initWebGPU'
 import initSkyBox from './util/skybox'
 import Camera from './control/camera'
@@ -24,8 +23,8 @@ async function run(){
   const {device, context, format, size, depthTexture, depthView} = await initWebGPU(canvas)
 
   // 相机
-  const camera = new Camera(canvas, Math.PI / 6, 0.1, 100000, 0.05);
-
+  const camera = new Camera(canvas, Math.PI / 6, 0.1, 100000, 0.05);  
+  
   // #region uniformBuffer
   const {
           timeFrameDeferenceBuffer,
@@ -45,9 +44,9 @@ async function run(){
   const depthObj = {
     depthTexture, depthView, cubeTexture
   }
-
+  // 创建阴影管线的Three Geometry和flat的modelMatrix Buffer
   var ShadowDepthModelBuffer = device.createBuffer({
-    size: uniformBufferSize * 2 + particlesPointAttr.range[0] * uniformBufferSize,
+    size: uniformBufferSize * 2,
     usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
   })
 
@@ -372,17 +371,18 @@ async function run(){
   
   // #region ParticlesPoint
   const particlesPointObj = await initParticlesPoint(device, format, particlesPointAttr.range[0]);
-  const PointAttr = {radius: 2}
-  function updataParticlesPoint(e?:number){
+  const PointAttr = {radius: 2, scale: 1}
+  function updataParticlesPoint(e :number = particlesPointAttr.range[0], scale : number = PointAttr.scale){
     const particlesModelArray = new Float32Array(particlesPointAttr.range[0] * 4 * 4);
     const particlesPointColorArray = new Float32Array(particlesPointAttr.range[0] * 4);
     const particlesPointVelocityArray = new Float32Array(particlesPointAttr.range[0] * 4);
     console.time("writerBuffer Particles Point")
-    for( let i = 0; i < particlesPointAttr.range[0]; i++){
+    for( let i = 0; i < e; i++){
          // 生成随机的角度（0 到 2π）
         const angle = Math.random() * Math.PI * 2;
         // 生成随机的半径（0 到 5）
-        const radius = Math.random() * 2;
+        // const radius = Math.random() * 2;
+        const radius = Math.random() * PointAttr.radius;
 
         const particlesPositionMatrix = mat4.identity();
         const xOffset = radius * Math.cos(angle);
@@ -414,29 +414,36 @@ async function run(){
       particlesPointObj.particlesPointColorBuffer,
       0,
       particlesPointColorArray
-  )
-  device.queue.writeBuffer(
-      particlesPointObj.velocityBuffer,
-      0,
-      particlesPointVelocityArray
-  )
-    if(e != null && e <= 500000){  
-      device.queue.writeBuffer(
-          particlesPointObj.inputBuffer,
-          0,
-          new Float32Array([e, -0.5, 0.5, -0.5, 0.5, -0.5, 0.5])
-      )     
-    }
+    )
+    device.queue.writeBuffer(
+        particlesPointObj.velocityBuffer,
+        0,
+        particlesPointVelocityArray
+    )
+    device.queue.writeBuffer(
+        particlesPointObj.inputBuffer,
+        0,
+        new Float32Array([particlesPointAttr.range[0], -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale])
+    )     
+    // if(e != null && e <= 500000){  
+    //   device.queue.writeBuffer(
+    //       particlesPointObj.inputBuffer,
+    //       0,
+    //       new Float32Array([e, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale])
+    //   )     
+    // }
   }
-  particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange((e)=>{
-    updataParticlesPoint(e)
+  particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange(()=>{
+    updataParticlesPoint(particlesPointAttr.range[0],PointAttr.scale)
   });
-  particlesPoint.add(particlesPointAttr, 'velocity').min(0.0001).max(0.005).step(0.00005).onChange(()=>{
+  particlesPoint.add(particlesPointAttr, 'velocity').min(0.0001).max(0.01).step(0.00005).onChange(()=>{
     updataParticlesPoint()
   });
   particlesPoint.add(PointAttr, 'radius').min(0.2).max(0.5).step(0.0001).onChange(()=>{
-
     updataParticlesPoint()
+  });
+  particlesPoint.add(PointAttr, 'scale').min(1).max(10).step(0.005).onChange((scale)=>{
+    updataParticlesPoint(particlesPointAttr.range[0],PointAttr.scale)
   });
 
   const particlesPointBindingGroup = device.createBindGroup({
@@ -539,6 +546,36 @@ async function run(){
           buffer: lightObj.lightViewProjectionBuffer
         }
       },
+      // {
+      //   binding: 2,
+      //   resource: {
+      //     buffer: timeFrameDeferenceBuffer
+      //   }
+      // },  
+    ]
+  })
+  const ShadowDepthMapBindingGroup1 = device.createBindGroup({
+    label: 'ShadowDepthMapBindingGroup',
+    layout: shadowDepthMapObj.shadowDepthMapBindingGroupLayout1,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: timeFrameDeferenceBuffer
+        }
+      },  
+      {
+        binding: 1,
+        resource: {
+          buffer: flatElevationBuffer
+        }
+      },
+      {
+        binding: 2,
+        resource: {
+          buffer: flatBigWavesFrequencyBuffer
+        }
+      },
     ]
   })
   const ShadowDepthMapForParticlesPointBindingGroup = device.createBindGroup({
@@ -569,9 +606,6 @@ async function run(){
     let timeOfNowframe = performance.now();
     let timeOfdifference = (timeOfNowframe - timeOfLastframe) / 30;
     timeOfLastframe = timeOfNowframe;
-    mat4.rotateX(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
-    mat4.rotateY(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
-    mat4.rotateZ(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     
     // 缓冲区写操作-颜色 频率 
     // #region threeGeometry
@@ -595,6 +629,10 @@ async function run(){
     // #endregion
 
     // #region 缓冲区写操作-模型变换矩阵
+    // threeGeometry
+    mat4.rotateX(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
+    mat4.rotateY(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
+    mat4.rotateZ(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     device.queue.writeBuffer(
       threeGeometryModelMatrixBuffer, 0, threeGeometryModelMatrix as Float32Array
     )
@@ -609,7 +647,7 @@ async function run(){
     device.queue.writeBuffer(
       flatThreeGeometryModelMatrixBuffer, 0, flatThreeGeometryModelMatrix as Float32Array
     )     
-
+    // 将threeGeometry flat的模型变换矩阵放入阴影管线的对应的模型变换矩阵Buffer
     device.queue.writeBuffer(
       ShadowDepthModelBuffer,
       0,
@@ -646,9 +684,9 @@ async function run(){
     // );
     // #endregion
 
+    // #region 管线
     const commandEncoder = device.createCommandEncoder();
     // 更新  出错  
-    // #region 管线
     // skyBoxRenderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
     const skyBoxRenderPassDescriptor: GPURenderPassDescriptor = {
       colorAttachments: [
@@ -692,6 +730,7 @@ async function run(){
       const shadowPass = commandEncoder.beginRenderPass(shadowPassDescriptor)
       shadowPass.setPipeline(shadowDepthMapObj.shadowDepthMapPipeLine)
       shadowPass.setBindGroup(0, ShadowDepthMapBindingGroup)
+      shadowPass.setBindGroup(1, ShadowDepthMapBindingGroup1)
       // set three Geometry vertex
       shadowPass.setVertexBuffer(0, vertexBufferFromThree);
       shadowPass.setIndexBuffer(vertexindexFromThree, 'uint16');
@@ -753,7 +792,6 @@ async function run(){
       passEncoder.setBindGroup(0, particlesPointBindingGroup);
       passEncoder.drawIndexed(1, particlesPointAttr.range[0] )
     }
-    // #endregion
 
     passEncoder.end();
 
@@ -769,6 +807,9 @@ async function run(){
     );
 
     device.queue.submit([commandEncoder.finish()]);
+
+    // #endregion
+
     requestAnimationFrame(frame)
   }
   frame()

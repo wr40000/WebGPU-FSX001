@@ -21,10 +21,43 @@ export default async function initShadowDepthMap(
                     type: 'uniform'
                 }
             },
+            // {
+            //     binding: 2,
+            //     visibility: GPUShaderStage.VERTEX,
+            //     buffer: {
+            //         type: 'uniform',
+            //     }
+            // },
+        ]
+    })
+    const shadowDepthMapBindingGroupLayout1 = device.createBindGroupLayout({
+        label: 'shadowDepthMapBindingGroupLayout',
+        entries: [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
+            {
+                binding: 2,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
         ]
     })
     const shadowDepthMapPipeLineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [shadowDepthMapBindingGroupLayout]
+        bindGroupLayouts: [shadowDepthMapBindingGroupLayout,shadowDepthMapBindingGroupLayout1]
     })
     const shadowDepthMapPipeLine = await device.createRenderPipelineAsync({
         label: 'shadowDepthMapPipeLine',
@@ -126,6 +159,7 @@ export default async function initShadowDepthMap(
 
     const shadowDepthMapObj = {
         shadowDepthMapBindingGroupLayout,
+        shadowDepthMapBindingGroupLayout1,
         shadowDepthMapPipeLine,
         shadowDepthMapForParticlesPointPipeLine,
         shadowDepthMapTexture,
