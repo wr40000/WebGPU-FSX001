@@ -121,6 +121,11 @@ export default function initLayout(device: GPUDevice){
                 type: 'comparison'
             }
         },
+        {
+            binding: 5,
+            visibility: GPUShaderStage.FRAGMENT,
+            sampler: {}
+          },
     ]
     })
     const initflatThreeGeometryPipelineLayout = device.createPipelineLayout({

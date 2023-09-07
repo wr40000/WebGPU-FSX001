@@ -1,4 +1,5 @@
 import shadowDepth from '../shaders/shadowDepth.wgsl?raw'
+import shadowDepthForParticlesPoint from '../shaders/shadowDepthForParticlesPoint.wgsl?raw'
 
 export default async function initShadowDepthMap(
     device:GPUDevice,
@@ -106,7 +107,7 @@ export default async function initShadowDepthMap(
         layout: shadowDepthMapPipeLineLayout,
         vertex: {
             module: device.createShaderModule({
-                code: shadowDepth,
+                code: shadowDepthForParticlesPoint,
             }),
             entryPoint: 'main',
             buffers: [{

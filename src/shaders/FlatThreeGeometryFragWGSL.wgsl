@@ -1,7 +1,9 @@
 @group(0) @binding(0) var<uniform> lightPosition : vec4<f32>;
+@group(0) @binding(5) var mySampler: sampler;
+@group(1) @binding(2) var textureImg: texture_2d<f32>;
 @group(1) @binding(3) var shadowMap: texture_depth_2d;
 @group(1) @binding(4) var shadowSampler: sampler_comparison;
-@binding(5) @group(0) var mySampler: sampler;
+@group(1) @binding(5) var imgSampler: sampler;
 
 @fragment
 fn main(
@@ -32,6 +34,8 @@ fn main(
     shadow = shadow / 9.0;
     // // ambient + diffuse * shadow
     let lightFactor = min(0.3 + shadow * diffuse, 1.0);
+    // return vec4<f32>(lightFactor * vec3<f32>(fragUV,1.0), 1.0);
     return vec4<f32>(lightFactor * vec3<f32>(fragUV,1.0), 1.0);
-    // return vec4<f32>(shadow * vec3<f32>(1.0), 1.0);
+    // let textureImgColor = textureSample(textureImg,imgSampler, fragUV);
+    // return vec4<f32>(lightFactor * textureImgColor.xyz, 1.0);
 }

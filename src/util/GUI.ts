@@ -10,7 +10,7 @@ const threeGeometryAttributes = {
     rotateSpeed:100,    //threeGeometry转速
     colorFrequency:0.001,   // 颜色变化频率
     gl_FragColor:vec4.create(0.5, 0.8, 1.0, 1.0),   //flat底色
-    Elevation:0.2,
+    Elevation:0,
     uBigWavesFrequency: { value: [4, 1.5] },  //vec2.create(4, 1.5)
     scaleOfFlat:{value: [30,30,1]}    //flat 缩放
 }

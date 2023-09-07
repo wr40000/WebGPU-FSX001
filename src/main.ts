@@ -193,6 +193,7 @@ async function run(){
   const flatThreeGeometryModelMatrix = mat4.identity();
   mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -3, -10),flatThreeGeometryModelMatrix)
   mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
+  mat4.rotateY(flatThreeGeometryModelMatrix, Math.PI/2, flatThreeGeometryModelMatrix)
   mat4.scale(flatThreeGeometryModelMatrix,
              vec3.create(threeGeometryAttributes.scaleOfFlat.value[0], threeGeometryAttributes.scaleOfFlat.value[1], 0.1),
              flatThreeGeometryModelMatrix)
@@ -320,6 +321,10 @@ async function run(){
       {
         binding: 4,
         resource: shadowDepthMapObj.shadowDepthSampler
+      },
+      {
+        binding: 5,
+        resource: SkyBoxObj.sampler,
       },
     ]
   })
@@ -628,7 +633,7 @@ async function run(){
     )
     // #endregion
 
-    // #region 缓冲区写操作-模型变换矩阵
+    // #region 缓冲区写操作-模型变换矩阵s
     // threeGeometry
     mat4.rotateX(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     mat4.rotateY(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
@@ -637,10 +642,11 @@ async function run(){
       threeGeometryModelMatrixBuffer, 0, threeGeometryModelMatrix as Float32Array
     )
 
-    // 根据GUI更新flat模型变换矩阵
+    // 根据GUI更新flat模型变换矩阵s
     const flatThreeGeometryModelMatrix = mat4.identity();
     mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -3, -10),flatThreeGeometryModelMatrix)
     mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
+    mat4.rotateZ(flatThreeGeometryModelMatrix, -Math.PI, flatThreeGeometryModelMatrix)
     mat4.scale(flatThreeGeometryModelMatrix,
                vec3.create(threeGeometryAttributes.scaleOfFlat.value[0], threeGeometryAttributes.scaleOfFlat.value[1], 0.1),
                flatThreeGeometryModelMatrix)
