@@ -31,7 +31,9 @@ export async function initUNIFORM(device: GPUDevice){
     let cubeTextureImg: GPUTexture;
     {
         const response = await fetch(
-            new URL("../../public/img/Di-3d.png", import.meta.url).toString()
+            // new URL("../../public/img/Di-3d.png", import.meta.url).toString()
+            new URL("../../public/img/img1_1k.jpg", import.meta.url).toString()
+            // new URL("../../public/img/img1_8k.jpg", import.meta.url).toString()
         );
         const imageBitmap = await createImageBitmap(await response.blob());
 

@@ -76,8 +76,8 @@ export default async function initSkyBox(
         //因为我们是从立方体内部看到的
         //并且我们使用具有向外法线的规则立方体几何数据，
         //cullMode应为“front”或“none”。
-        cullMode: "none",
-        // cullMode: "front",
+        // cullMode: "none",
+        cullMode: "front",
         // cullMode: "back",
     },
 

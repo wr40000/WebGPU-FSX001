@@ -126,7 +126,7 @@ async function run(){
              = await initThreeMesh(device,
                                   format,
                                   initThreeGeometryPipelineLayout,
-                                  'BoxGeometry',
+                                  'SphereGeometry',
                                   ThreeGeometryVertWGSL,
                                   ThreeGeometryFragWGSL,
                                   GUIForthreeGeometry);
@@ -333,7 +333,7 @@ async function run(){
   // #endregion
 
   // #region ParticlesGalaxy
-  const NUM = 1;
+  const NUM = 5;
   const particleObj = await initParticlesGalaxy(device, canvas, format, NUM);
   
   const particlesBindingGroup = device.createBindGroup({
@@ -438,9 +438,9 @@ async function run(){
     //   )     
     // }
   }
-  particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange(()=>{
-    updataParticlesPoint(particlesPointAttr.range[0],PointAttr.scale)
-  });
+  // particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange(()=>{
+  //   updataParticlesPoint(particlesPointAttr.range[0],PointAttr.scale)
+  // });
   particlesPoint.add(particlesPointAttr, 'velocity').min(0.0001).max(0.01).step(0.00005).onChange(()=>{
     updataParticlesPoint()
   });
@@ -633,7 +633,7 @@ async function run(){
     )
     // #endregion
 
-    // #region 缓冲区写操作-模型变换矩阵s
+    // #region 缓冲区写操作-模型变换矩阵
     // threeGeometry
     mat4.rotateX(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     mat4.rotateY(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
@@ -772,7 +772,9 @@ async function run(){
       passEncoder.setBindGroup(0, threeGeometryBindingGroup1);
       passEncoder.setBindGroup(1, flatThreeGeometryBindingGroup2);
       // passEncoder.setBindGroup(2, threeGeometryBindingGroup2);
-      passEncoder.drawIndexed(arrayFromThreeIndexCount)
+      if(threeGeometryAttributes.isShow){
+        passEncoder.drawIndexed(arrayFromThreeIndexCount)
+      }
     }
     // Three flat Geometry 管线
     {

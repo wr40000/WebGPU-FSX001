@@ -124,7 +124,7 @@ export async function initParticlesGalaxy(
          // 生成随机的角度（0 到 2π）
         const angle = Math.random() * Math.PI * 2;
         // 生成随机的半径（0 到 5）
-        const radius = Math.random() * 5;
+        const radius = Math.random() * 200;
 
         const particlesPositionMatrix = mat4.identity();
         const xOffset = radius * Math.cos(angle);

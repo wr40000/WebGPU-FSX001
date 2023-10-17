@@ -1,22 +1,20 @@
 {
   "compilerOptions": {
-      "target": "ESNext",
-      "useDefineForClassFields": true,
-      "module": "ESNext",
-      "lib": ["ESNext", "DOM"],
-      "moduleResolution": "Node",
+      "target": "ESNext",/* 为生成的 JavaScript 设置 JavaScript 语言版本，并包括兼容的库声明。 */
+      "useDefineForClassFields": true,/* 生成 ECMAScript 标准兼容的类字段。 */
+      "module": "ESNext",/* 指定生成的模块代码。 */
+      "lib": ["ESNext", "DOM"],/* 指定一组捆绑的库声明文件，描述目标运行环境。 */
+      "moduleResolution": "Node",/* 指定 TypeScript 查找给定模块说明符的文件时使用的方法。 */
       "strict": true,
-      "sourceMap": true,
-      "resolveJsonModule": true,
-      "esModuleInterop": true,
+      "sourceMap": true,/* 为生成的 JavaScript 文件创建源映射文件。 */
+      "resolveJsonModule": true,/* 启用导入 .json 文件。 */
+      "esModuleInterop": true,/* 生成额外的 JavaScript 以便支持导入 CommonJS 模块。这启用了 'allowSyntheticDefaultImports' 以确保类型兼容性。 */
       "noEmit": true,
-      "noUnusedLocals": false,
-      "noUnusedParameters": false,
-      // "noUnusedLocals": true,
-      // "noUnusedParameters": true,
-      "noImplicitReturns": true,
+      "noUnusedLocals": false,/* 启用未使用的局部变量的错误报告。 */
+      "noUnusedParameters": false,/* 当函数参数未被使用时引发错误。 */
+      "noImplicitReturns": true,/* 启用对没有明确返回值的函数路径的错误报告。 */
       "types": ["vite/client", "@webgpu/types", "@types/dom-webcodecs"],
-      "skipLibCheck": true
+      "skipLibCheck": true/* 跳过类型检查所有 .d.ts 文件。 */
 
   },
   "include": ["src"]

@@ -114,32 +114,33 @@ export default async function initThreeMesh(
         cubeOFThree = new THREE.TorusGeometry( 1, 0.3, 16, 100 );
     }else if(whitchGeometry == 'TorusKnotGeometry'){
         cubeOFThree = new THREE.TorusKnotGeometry( 1, 0.3, 100, 16 );
-    }else if(whitchGeometry == 'TubeGeometry'){
-        class CustomSinCurve extends THREE.Curve {
-
-            constructor( scale = 1 ) {
-        
-                super();
-        
-                this.scale = scale;
-        
-            }
-        
-            getPoint( t, optionalTarget = new THREE.Vector3() ) {
-        
-                const tx = t * 3 - 1.5;
-                const ty = Math.sin( 2 * Math.PI * t );
-                const tz = 0;
-        
-                return optionalTarget.set( tx, ty, tz ).multiplyScalar( this.scale );
-        
-            }
-        
-        }
-        
-        const path = new CustomSinCurve( 10 );
-        cubeOFThree = new THREE.TubeGeometry( path, 20, 2, 8, false );
     }
+    // else if(whitchGeometry == 'TubeGeometry'){
+    //     class CustomSinCurve extends THREE.Curve {
+
+    //         constructor( scale = 1 ) {
+        
+    //             super();
+        
+    //             this.scale = scale;
+        
+    //         }
+        
+    //         getPoint( t, optionalTarget = new THREE.Vector3() ) {
+        
+    //             const tx = t * 3 - 1.5;
+    //             const ty = Math.sin( 2 * Math.PI * t );
+    //             const tz = 0;
+        
+    //             return optionalTarget.set( tx, ty, tz ).multiplyScalar( this.scale );
+        
+    //         }
+        
+    //     }
+        
+    //     const path = new CustomSinCurve( 10 );
+    //     cubeOFThree = new THREE.TubeGeometry( path, 20, 2, 8, false );
+    // }
 
     if(cubeOFThree == undefined)
         throw new Error

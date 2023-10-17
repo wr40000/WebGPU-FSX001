@@ -15,12 +15,11 @@ fn main(
 ) -> @location(0) vec4<f32> {
     // 随时间渐变
     // return vec4<f32>(
-    //     fragPosition.x * timeOfFrag,
+    //     fragPosition.x,
     //     fragPosition.y * timeOfFrag,
     //     fragPosition.z,
     //     1.0
     //     );    
-    // return lastFrameTexture;
   
     // 上一帧画面
     // let texColor = textureSample(lastFrameTexture, mySampler, fragUV * 0.8 + vec2(0.1));
@@ -64,7 +63,9 @@ fn main(
     let texColor = textureSample(lastFrameTexture, mySampler, fragUV * 0.8 + vec2(0.1));
     // 图片
     let texColor_img = textureSample(cubeTextureImg, mySampler, fragUV * 0.8 + vec2(0.1));
-    var color_mixin = texColor_img * timeOfFrag + (1 - timeOfFrag) * texColor;
+
+    // var color_mixin = texColor_img * timeOfFrag + (1 - timeOfFrag) * texColor;
+    var color_mixin = texColor_img;
 
     return lightFactor * color_mixin;
 }

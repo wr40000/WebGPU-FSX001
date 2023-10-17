@@ -12,10 +12,11 @@ const threeGeometryAttributes = {
     gl_FragColor:vec4.create(0.5, 0.8, 1.0, 1.0),   //flat底色
     Elevation:0,
     uBigWavesFrequency: { value: [4, 1.5] },  //vec2.create(4, 1.5)
-    scaleOfFlat:{value: [30,30,1]}    //flat 缩放
+    scaleOfFlat:{value: [5,5,1]},    //flat 缩放
+    isShow:true
 }
 const sphereMesh = {
-    radius: 0.0005,
+    radius: 0.01,
     widthSegments: 32,
     heightSegments: 16,
     randomness: 0
@@ -24,13 +25,14 @@ const sphereMesh = {
 const threeGeometry = gui.addFolder("threeGeometry")
 threeGeometry.add(threeGeometryAttributes, 'rotateSpeed').min(5).max(100).step(0.01);
 threeGeometry.add(threeGeometryAttributes, 'colorFrequency').min(0).max(0.01).step(0.0001);
+threeGeometry.add(threeGeometryAttributes, 'isShow');
 
 const flat = gui.addFolder("flat")
 flat.add(threeGeometryAttributes, 'Elevation').min(0).max(3).step(0.01);
-flat.add(threeGeometryAttributes.uBigWavesFrequency.value, '0').min(0).max(10).step(0.001).name('uBigWavesFrequencyX')
-flat.add(threeGeometryAttributes.uBigWavesFrequency.value, '1').min(0).max(10).step(0.001).name('uBigWavesFrequencyY')
-flat.add(threeGeometryAttributes.scaleOfFlat.value, '0').min(1).max(10).step(0.001).name('scaleOfFlatX')
-flat.add(threeGeometryAttributes.scaleOfFlat.value, '1').min(1).max(10).step(0.001).name('scaleOfFlatY')
+// flat.add(threeGeometryAttributes.uBigWavesFrequency.value, '0').min(0).max(10).step(0.001).name('uBigWavesFrequencyX')
+// flat.add(threeGeometryAttributes.uBigWavesFrequency.value, '1').min(0).max(10).step(0.001).name('uBigWavesFrequencyY')
+// flat.add(threeGeometryAttributes.scaleOfFlat.value, '0').min(1).max(10).step(0.001).name('scaleOfFlatX')
+// flat.add(threeGeometryAttributes.scaleOfFlat.value, '1').min(1).max(10).step(0.001).name('scaleOfFlatY')
 
 // 创建性能监视器
 // #region
