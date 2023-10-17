@@ -32,6 +32,7 @@ async function run(){
           flatBigWavesFrequencyBuffer,
           cameraVPMatrixBuffer,
           cubeTextureImg,
+          cubeTextureImg_8k,
           particlesTextureImg                   
         } = await initUNIFORM(device)
   const lightObj = await initLight(device, size)
@@ -144,7 +145,15 @@ async function run(){
     const updatedValues = await updateThreeMesh();
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
-  });         
+  });        
+  threeGeometry.add(threeGeometryAttributes, 'is_8k').onChange(async ()=>{
+    console.log(threeGeometryAttributes.is_8k);
+    
+    const updatedValues = await updateThreeMesh();
+    // 在 Promise 解决后更新变量的值
+    ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
+  });  
+
       
   // 调用initThreeMesh  更新flatThreeGeometry                                                
   const updateFlatThreeMesh = async () => {
@@ -312,7 +321,7 @@ async function run(){
       },
       {
         binding: 2,
-        resource: cubeTextureImg.createView()
+        resource: threeGeometryAttributes.is_8k ? cubeTextureImg_8k.createView() : cubeTextureImg.createView()
       },
       {
         binding: 3,

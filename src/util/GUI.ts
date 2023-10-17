@@ -13,7 +13,8 @@ const threeGeometryAttributes = {
     Elevation:0,
     uBigWavesFrequency: { value: [4, 1.5] },  //vec2.create(4, 1.5)
     scaleOfFlat:{value: [5,5,1]},    //flat 缩放
-    isShow:true
+    isShow:true,
+    is_8k:false
 }
 const sphereMesh = {
     radius: 0.01,
@@ -26,6 +27,7 @@ const threeGeometry = gui.addFolder("threeGeometry")
 threeGeometry.add(threeGeometryAttributes, 'rotateSpeed').min(5).max(100).step(0.01);
 threeGeometry.add(threeGeometryAttributes, 'colorFrequency').min(0).max(0.01).step(0.0001);
 threeGeometry.add(threeGeometryAttributes, 'isShow');
+
 
 const flat = gui.addFolder("flat")
 flat.add(threeGeometryAttributes, 'Elevation').min(0).max(3).step(0.01);

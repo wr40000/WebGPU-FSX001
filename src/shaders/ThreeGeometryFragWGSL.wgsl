@@ -38,7 +38,7 @@ fn main(
     // return texColor_img;
 
     // 图片 + 渐变 + 上一帧画面 + 阴影
-        // Directional Light
+    // Directional Light
     let diffuse: f32 = max(dot(normalize(lightPosition.xyz), fragNormal), 0.0);
     // add shadow factor
     var shadow : f32 = 0.0;
