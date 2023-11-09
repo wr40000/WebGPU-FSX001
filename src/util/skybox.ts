@@ -123,55 +123,6 @@ export default async function initSkyBox(
               `../../public/img/cubemap_2/nz.png`,
               import.meta.url
             ).toString(),
-            // new URL(
-            //   `../../public/img/cubemap_1/px.jpg`,
-            //   import.meta.url
-            // ).toString(),
-            // new URL(
-            //   `../../public/img/cubemap_1/nx.jpg`,
-            //   import.meta.url
-            // ).toString(),
-            // new URL(
-            //   `../../public/img/cubemap_1/py.jpg`,
-            //   import.meta.url
-            // ).toString(),
-            // new URL(
-            //   `../../public/img/cubemap_1/ny.jpg`,
-            //   import.meta.url
-            // ).toString(),
-            // new URL(
-            //   `../../public/img/cubemap_1/pz.jpg`,
-            //   import.meta.url
-            // ).toString(),
-            // new URL(
-            //   `../../public/img/cubemap_1/nz.jpg`,
-            //   import.meta.url
-            // ).toString(),
-            // Cubeimg2
-            // new URL(
-            // `../../public/img/cubemap/posx.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/negx.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/posy.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/negy.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/posz.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/negz.jpg`,
-            // import.meta.url
-            // ).toString(),
         ];
         const promises = imgSrcs.map(async (src) => {
             const response = await fetch(src);
@@ -228,31 +179,6 @@ export default async function initSkyBox(
               `../../public/img/cubemap_1/nz.jpg`,
               import.meta.url
             ).toString(),
-            // Cubeimg2
-            // new URL(
-            // `../../public/img/cubemap/posx.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/negx.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/posy.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/negy.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/posz.jpg`,
-            // import.meta.url
-            // ).toString(),
-            // new URL(
-            // `../../public/img/cubemap/negz.jpg`,
-            // import.meta.url
-            // ).toString(),
         ];
         const promises = imgSrcs.map(async (src) => {
             const response = await fetch(src);

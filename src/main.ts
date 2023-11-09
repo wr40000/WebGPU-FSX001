@@ -106,7 +106,7 @@ async function run(){
       },
       {
         binding: 3,
-        resource: SkyBoxObj.skyBoxmapTexture3.createView({
+        resource: SkyBoxObj.skyBoxmapTexture.createView({
           dimension: "cube",
         }),
       },
