@@ -16,6 +16,8 @@ pnpm install
 pnpm run dev
 ```
 
+作为刚学习WebGPU的小白，代码写的及其臃肿，且下层逻辑封装的非常的牛马，导致现在更新GUI控件代码十分难受，作为自己学习WebGPU的第一个Demo也只能捏着鼻子采取最臃肿的方式暴力完成剩下的部分
+
 `Thank you for Orillusion's WebGPU tutorial`
 
 脚滑的猫咪

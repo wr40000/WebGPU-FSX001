@@ -119,7 +119,7 @@ export async function initParticlesGalaxy(
         size: indices.byteLength,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE | GPUBufferUsage.INDEX        
     })
-    console.time("writerBuffer Particles Galaxy")
+    // console.time("writerBuffer Particles Galaxy")
     for( let i = 0; i < NUM; i++){
          // 生成随机的角度（0 到 2π）
         const angle = Math.random() * Math.PI * 2;
@@ -138,7 +138,7 @@ export async function initParticlesGalaxy(
         mat4.scale(particlesPositionMatrix, [scale, scale, scale], particlesPositionMatrix);
         particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)
     }
-    console.timeEnd("writerBuffer Particles Galaxy")
+    // console.timeEnd("writerBuffer Particles Galaxy")
     device.queue.writeBuffer(
         particlesModelBuffer,
         0,

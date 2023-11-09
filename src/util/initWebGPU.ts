@@ -9,8 +9,8 @@ export default async function initWebGPU(canvas: HTMLCanvasElement) {
     // 设备支持资源组最大绑定资源数目
     const maxBindGroups = device.limits.maxBindGroups;
     const maxBindingsPerBindGroups = device.limits.maxBindingsPerBindGroup;
-    console.log(`Max Bind Groups: ${maxBindGroups}`);
-    console.log(`max Bindings Per BindGroups: ${maxBindingsPerBindGroups}`);
+    // console.log(`Max Bind Groups: ${maxBindGroups}`);
+    // console.log(`max Bindings Per BindGroups: ${maxBindingsPerBindGroups}`);
     const context = canvas.getContext('webgpu') as GPUCanvasContext
     const format = navigator.gpu.getPreferredCanvasFormat()
     const devicePixelRatio = window.devicePixelRatio || 1

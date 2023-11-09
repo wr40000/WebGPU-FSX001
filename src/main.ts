@@ -10,7 +10,7 @@ import ThreeGeometryVertWGSL from "./shaders/ThreeGeometryVertWGSL.wgsl?raw"
 import FlatThreeGeometryFragWGSL from "./shaders/FlatThreeGeometryFragWGSL.wgsl?raw"
 import FlatThreeGeometryVertWGSL from "./shaders/FlatThreeGeometryVertWGSL.wgsl?raw"
 import {GUIForthreeGeometry, GUIForFlatthreeGeometry, initUNIFORM, initLight }  from './util/const'
-import {stats, threeGeometryAttributes, threeGeometry, flat, particlesPoint, particlesPointAttr} from './util/GUI'
+import {stats, threeGeometryAttributes, skyBoxAttr, threeGeometry, flat, SkyBoxGui, particlesPoint, particlesPointAttr} from './util/GUI'
 import {initParticlesGalaxy} from './util/particlesGalaxy'
 import {initParticlesPoint} from './util/particlesPoint'
 import initShadowDepthMap from './util/shadowDepthMap'
@@ -106,12 +106,78 @@ async function run(){
       },
       {
         binding: 3,
-        resource: SkyBoxObj.skyBoxmapTexture.createView({
+        resource: SkyBoxObj.skyBoxmapTexture3.createView({
           dimension: "cube",
         }),
       },
     ]
   })
+  const SkyBoxBindingGroupforskyBoxmapTexture2 = device.createBindGroup({
+    label: 'SkyBoxBindingGroup',
+    layout: SkyBoxBindGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: SkyBoxObj.skyBoxModelMatrixBuffer,
+          offset: 0,
+          size: uniformBufferSize,
+        },
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: cameraVPMatrixBuffer,
+          offset: 0,
+          size: uniformBufferSize,
+        },
+      },
+      {
+        binding: 2,
+        resource: SkyBoxObj.sampler,
+      },
+      {
+        binding: 3,
+        resource: SkyBoxObj.skyBoxmapTexture2.createView({
+          dimension: "cube",
+        }),
+      },
+    ]
+  })
+  const SkyBoxBindingGroupforskyBoxmapTexture3 = device.createBindGroup({
+    label: 'SkyBoxBindingGroup',
+    layout: SkyBoxBindGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: SkyBoxObj.skyBoxModelMatrixBuffer,
+          offset: 0,
+          size: uniformBufferSize,
+        },
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: cameraVPMatrixBuffer,
+          offset: 0,
+          size: uniformBufferSize,
+        },
+      },
+      {
+        binding: 2,
+        resource: SkyBoxObj.sampler,
+      },
+      {
+        binding: 3,
+        resource: SkyBoxObj.skyBoxmapTexture3.createView({
+          dimension: "cube",
+        }),
+      },
+    ]
+  })
+  
+SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天空盒纹理');
   // #endregion
 
   // #region Three Geometry
@@ -119,7 +185,9 @@ async function run(){
   // BoxGeometry CapsuleGeometry CircleGeometry ConeGeometry CylinderGeometry 
   // PlaneGeometry RingGeometry ShapeGeometry SphereGeometry TorusGeometry TorusKnotGeometry TubeGeometry
   // 调用initThreeMesh  更新ThreeGeometry 
-  const updateThreeMesh = async () => {
+  
+  let shape = threeGeometryAttributes.shape;
+  const updateThreeMesh = async (str: string) => {
     const { ThreeGeometryPipeline,
             vertexindexFromThree,
             vertexBufferFromThree,
@@ -127,7 +195,7 @@ async function run(){
              = await initThreeMesh(device,
                                   format,
                                   initThreeGeometryPipelineLayout,
-                                  'SphereGeometry',
+                                  str,
                                   ThreeGeometryVertWGSL,
                                   ThreeGeometryFragWGSL,
                                   GUIForthreeGeometry);
@@ -139,21 +207,32 @@ async function run(){
   let { ThreeGeometryPipeline,
         vertexindexFromThree,
         vertexBufferFromThree,
-        arrayFromThreeIndexCount }  = await updateThreeMesh();
+        arrayFromThreeIndexCount }  = await updateThreeMesh(shape);
   // gui ThreeGeometry
   threeGeometry.add(GUIForthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
-    const updatedValues = await updateThreeMesh();
+    const updatedValues = await updateThreeMesh(shape);
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
-  });        
+  }).name('去除三角面');        
   threeGeometry.add(threeGeometryAttributes, 'is_8k').onChange(async ()=>{
     console.log(threeGeometryAttributes.is_8k);
     
-    const updatedValues = await updateThreeMesh();
+    const updatedValues = await updateThreeMesh(shape);
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
-  });  
+  }).name('更换为8K贴图');  
+  threeGeometry.add(threeGeometryAttributes, 'shape', ['BoxGeometry', 'CapsuleGeometry', 'CircleGeometry', 'ConeGeometry',
+  'CylinderGeometry', 'PlaneGeometry', 'RingGeometry', 'ShapeGeometry', 'SphereGeometry', 'TorusGeometry',
+ 'TorusKnotGeometry', 'TubeGeometry']).onChange(async (str)=>{
 
+  const updatedValues = await updateThreeMesh(str);
+  // 在 Promise 解决后更新变量的值
+  // vertexindexFromThree, vertexBufferFromThree, arrayFromThreeIndexCount
+  ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
+  arrayFromThreeIndexCount = updatedValues.arrayFromThreeIndexCount
+  vertexBufferFromThree = updatedValues.vertexBufferFromThree
+  vertexindexFromThree = updatedValues.vertexindexFromThree
+}).name('更换Three模型');
       
   // 调用initThreeMesh  更新flatThreeGeometry                                                
   const updateFlatThreeMesh = async () => {
@@ -204,7 +283,7 @@ async function run(){
   mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
   mat4.rotateY(flatThreeGeometryModelMatrix, Math.PI/2, flatThreeGeometryModelMatrix)
   mat4.scale(flatThreeGeometryModelMatrix,
-             vec3.create(threeGeometryAttributes.scaleOfFlat.value[0], threeGeometryAttributes.scaleOfFlat.value[1], 0.1),
+             vec3.create(threeGeometryAttributes.scaleOfFlat.xScale, threeGeometryAttributes.scaleOfFlat.yScale, 0.1),
              flatThreeGeometryModelMatrix)
   const flatThreeGeometryModelMatrixBuffer = device.createBuffer({
     label: 'flatThreeGeometryModelMatrix',
@@ -321,7 +400,41 @@ async function run(){
       },
       {
         binding: 2,
-        resource: threeGeometryAttributes.is_8k ? cubeTextureImg_8k.createView() : cubeTextureImg.createView()
+        resource: cubeTextureImg.createView()
+      },
+      {
+        binding: 3,
+        resource: shadowDepthMapObj.shadowDepthView
+      },
+      {
+        binding: 4,
+        resource: shadowDepthMapObj.shadowDepthSampler
+      },
+      {
+        binding: 5,
+        resource: SkyBoxObj.sampler,
+      },
+    ]
+  })
+  const flatThreeGeometryBindingGroup2for8K = device.createBindGroup({
+    label: 'flatThreeGeometryBindingGroup2',
+    layout:initflatThreeGeometryBindingGroupLayout2,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: flatElevationBuffer
+        }
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: flatBigWavesFrequencyBuffer
+        }
+      },
+      {
+        binding: 2,
+        resource: cubeTextureImg_8k.createView()
       },
       {
         binding: 3,
@@ -638,7 +751,7 @@ async function run(){
     device.queue.writeBuffer(
       flatBigWavesFrequencyBuffer,
       0,
-      new Float32Array([threeGeometryAttributes.uBigWavesFrequency.value[0],threeGeometryAttributes.uBigWavesFrequency.value[1]])
+      new Float32Array([threeGeometryAttributes.uBigWavesFrequency.xFrequency,threeGeometryAttributes.uBigWavesFrequency.yFrequency])
     )
     // #endregion
 
@@ -653,11 +766,11 @@ async function run(){
 
     // 根据GUI更新flat模型变换矩阵s
     const flatThreeGeometryModelMatrix = mat4.identity();
-    mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -3, -10),flatThreeGeometryModelMatrix)
+    mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -5, -10),flatThreeGeometryModelMatrix)
     mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
     mat4.rotateZ(flatThreeGeometryModelMatrix, -Math.PI, flatThreeGeometryModelMatrix)
     mat4.scale(flatThreeGeometryModelMatrix,
-               vec3.create(threeGeometryAttributes.scaleOfFlat.value[0], threeGeometryAttributes.scaleOfFlat.value[1], 0.1),
+               vec3.create(threeGeometryAttributes.scaleOfFlat.xScale, threeGeometryAttributes.scaleOfFlat.yScale, 0.1),
                flatThreeGeometryModelMatrix)
     device.queue.writeBuffer(
       flatThreeGeometryModelMatrixBuffer, 0, flatThreeGeometryModelMatrix as Float32Array
@@ -769,7 +882,8 @@ async function run(){
     {        
       passEncoder.setPipeline(SkyBoxObj.skyBoxPipeline);
       passEncoder.setVertexBuffer(0, SkyBoxObj.skyBoxVerticesBuffer);
-      passEncoder.setBindGroup(0, SkyBoxBindingGroup);
+      passEncoder.setBindGroup(0, skyBoxAttr.skyMap == '水天一色' ? SkyBoxBindingGroup :
+        (skyBoxAttr.skyMap == '田野' ? SkyBoxBindingGroupforskyBoxmapTexture2 : SkyBoxBindingGroupforskyBoxmapTexture3));
       passEncoder.draw(SkyBoxObj.cubeVertexCount, 1, 0, 0);
     }
 
@@ -779,7 +893,7 @@ async function run(){
       passEncoder.setVertexBuffer(0, vertexBufferFromThree);
       passEncoder.setIndexBuffer(vertexindexFromThree, 'uint16');
       passEncoder.setBindGroup(0, threeGeometryBindingGroup1);
-      passEncoder.setBindGroup(1, flatThreeGeometryBindingGroup2);
+      passEncoder.setBindGroup(1, threeGeometryAttributes.is_8k ? flatThreeGeometryBindingGroup2for8K : flatThreeGeometryBindingGroup2);
       // passEncoder.setBindGroup(2, threeGeometryBindingGroup2);
       if(threeGeometryAttributes.isShow){
         passEncoder.drawIndexed(arrayFromThreeIndexCount)

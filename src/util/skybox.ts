@@ -200,6 +200,144 @@ export default async function initSkyBox(
             );
         }
     }
+    let skyBoxmapTexture2: GPUTexture;
+    {
+        // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
+        const imgSrcs = [
+            new URL(
+              `../../public/img/cubemap_1/px.jpg`,
+              import.meta.url
+            ).toString(),
+            new URL(
+              `../../public/img/cubemap_1/nx.jpg`,
+              import.meta.url
+            ).toString(),
+            new URL(
+              `../../public/img/cubemap_1/py.jpg`,
+              import.meta.url
+            ).toString(),
+            new URL(
+              `../../public/img/cubemap_1/ny.jpg`,
+              import.meta.url
+            ).toString(),
+            new URL(
+              `../../public/img/cubemap_1/pz.jpg`,
+              import.meta.url
+            ).toString(),
+            new URL(
+              `../../public/img/cubemap_1/nz.jpg`,
+              import.meta.url
+            ).toString(),
+            // Cubeimg2
+            // new URL(
+            // `../../public/img/cubemap/posx.jpg`,
+            // import.meta.url
+            // ).toString(),
+            // new URL(
+            // `../../public/img/cubemap/negx.jpg`,
+            // import.meta.url
+            // ).toString(),
+            // new URL(
+            // `../../public/img/cubemap/posy.jpg`,
+            // import.meta.url
+            // ).toString(),
+            // new URL(
+            // `../../public/img/cubemap/negy.jpg`,
+            // import.meta.url
+            // ).toString(),
+            // new URL(
+            // `../../public/img/cubemap/posz.jpg`,
+            // import.meta.url
+            // ).toString(),
+            // new URL(
+            // `../../public/img/cubemap/negz.jpg`,
+            // import.meta.url
+            // ).toString(),
+        ];
+        const promises = imgSrcs.map(async (src) => {
+            const response = await fetch(src);
+            return createImageBitmap(await response.blob());
+        });
+        const imageBitmaps = await Promise.all(promises);
+
+        skyBoxmapTexture2 = device.createTexture({
+            dimension: "2d",
+            // Create a 2d array texture.
+            // Assume each image has the same size.
+            size: [imageBitmaps[0].width, imageBitmaps[0].height, 6],
+            format: "rgba8unorm",
+            usage:
+            GPUTextureUsage.TEXTURE_BINDING |
+            GPUTextureUsage.COPY_DST |
+            GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+
+        for (let i = 0; i < imageBitmaps.length; i++) {
+            const imageBitmap = imageBitmaps[i];
+            device.queue.copyExternalImageToTexture(
+            { source: imageBitmap },
+            { texture: skyBoxmapTexture2, origin: [0, 0, i] },
+            [imageBitmap.width, imageBitmap.height]
+            );
+        }
+    }
+    let skyBoxmapTexture3: GPUTexture;
+    {
+        // The order of the array layers is [+X, -X, +Y, -Y, +Z, -Z]
+        const imgSrcs = [
+            // Cubeimg2
+            new URL(
+            `../../public/img/cubemap/posx.jpg`,
+            import.meta.url
+            ).toString(),
+            new URL(
+            `../../public/img/cubemap/negx.jpg`,
+            import.meta.url
+            ).toString(),
+            new URL(
+            `../../public/img/cubemap/posy.jpg`,
+            import.meta.url
+            ).toString(),
+            new URL(
+            `../../public/img/cubemap/negy.jpg`,
+            import.meta.url
+            ).toString(),
+            new URL(
+            `../../public/img/cubemap/posz.jpg`,
+            import.meta.url
+            ).toString(),
+            new URL(
+            `../../public/img/cubemap/negz.jpg`,
+            import.meta.url
+            ).toString(),
+        ];
+        const promises = imgSrcs.map(async (src) => {
+            const response = await fetch(src);
+            return createImageBitmap(await response.blob());
+        });
+        const imageBitmaps = await Promise.all(promises);
+
+        skyBoxmapTexture3 = device.createTexture({
+            dimension: "2d",
+            // Create a 2d array texture.
+            // Assume each image has the same size.
+            size: [imageBitmaps[0].width, imageBitmaps[0].height, 6],
+            format: "rgba8unorm",
+            usage:
+            GPUTextureUsage.TEXTURE_BINDING |
+            GPUTextureUsage.COPY_DST |
+            GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+
+        for (let i = 0; i < imageBitmaps.length; i++) {
+            const imageBitmap = imageBitmaps[i];
+            device.queue.copyExternalImageToTexture(
+            { source: imageBitmap },
+            { texture: skyBoxmapTexture3, origin: [0, 0, i] },
+            [imageBitmap.width, imageBitmap.height]
+            );
+        }
+    }
     // 采样器
     const sampler = device.createSampler({
     magFilter: "linear",
@@ -224,7 +362,7 @@ export default async function initSkyBox(
 
 
     const SKYBOXOBJ = {
-        skyBoxVerticesBuffer,skyBoxPipeline,skyBoxmapTexture,sampler,skyBoxModelMatrixBuffer,
+        skyBoxVerticesBuffer,skyBoxPipeline,skyBoxmapTexture,skyBoxmapTexture2,skyBoxmapTexture3,sampler,skyBoxModelMatrixBuffer,
         cubeVertexCount
     }
     return SKYBOXOBJ
