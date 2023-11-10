@@ -64,8 +64,8 @@ fn main(
     // 图片
     let texColor_img = textureSample(cubeTextureImg, mySampler, fragUV * 0.8 + vec2(0.1));
 
-    // var color_mixin = texColor_img * timeOfFrag + (1 - timeOfFrag) * texColor;
-    var color_mixin = texColor_img;
+    var color_mixin = texColor_img * timeOfFrag + (1 - timeOfFrag) * texColor;
+    // var color_mixin = texColor_img;
 
     return lightFactor * color_mixin;
 }

@@ -10,7 +10,8 @@ import ThreeGeometryVertWGSL from "./shaders/ThreeGeometryVertWGSL.wgsl?raw"
 import FlatThreeGeometryFragWGSL from "./shaders/FlatThreeGeometryFragWGSL.wgsl?raw"
 import FlatThreeGeometryVertWGSL from "./shaders/FlatThreeGeometryVertWGSL.wgsl?raw"
 import {GUIForthreeGeometry, GUIForFlatthreeGeometry, initUNIFORM, initLight }  from './util/const'
-import {stats, threeGeometryAttributes, skyBoxAttr, threeGeometry, flat, SkyBoxGui, particlesPoint, particlesPointAttr} from './util/GUI'
+import {stats, threeGeometryAttributes, skyBoxAttr, threeGeometry, flat, SkyBoxGui,
+        particlesPoint, particlesPointAttr, ParticlesGalaxyAttr} from './util/GUI'
 import {initParticlesGalaxy} from './util/particlesGalaxy'
 import {initParticlesPoint} from './util/particlesPoint'
 import initShadowDepthMap from './util/shadowDepthMap'
@@ -213,10 +214,9 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
     const updatedValues = await updateThreeMesh(shape);
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
-  }).name('去除三角面');        
+  }).name('去除三角面');   
+  // threeGeometry.add(threeGeometryAttributes, 'radiusScale').min(1).max(10).step(0.01).name('半径缩放');     
   threeGeometry.add(threeGeometryAttributes, 'is_8k').onChange(async ()=>{
-    console.log(threeGeometryAttributes.is_8k);
-    
     const updatedValues = await updateThreeMesh(shape);
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
@@ -261,7 +261,7 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
     const updatedValues = await updateFlatThreeMesh();
     // 在 Promise 解决后更新变量的值
     flatThreeGeometryPipeline = updatedValues.flatThreeGeometryPipeline
-  });                      
+  }).name('去除三角面');                      
   // 模型变换矩阵
   // #region
   // three Geometry
@@ -279,20 +279,20 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
 
   // flat 模型变换矩阵
   const flatThreeGeometryModelMatrix = mat4.identity();
-  mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -3, -10),flatThreeGeometryModelMatrix)
-  mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
-  mat4.rotateY(flatThreeGeometryModelMatrix, Math.PI/2, flatThreeGeometryModelMatrix)
-  mat4.scale(flatThreeGeometryModelMatrix,
-             vec3.create(threeGeometryAttributes.scaleOfFlat.xScale, threeGeometryAttributes.scaleOfFlat.yScale, 0.1),
-             flatThreeGeometryModelMatrix)
+  // mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -3, -10),flatThreeGeometryModelMatrix)
+  // mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
+  // mat4.rotateY(flatThreeGeometryModelMatrix, Math.PI/2, flatThreeGeometryModelMatrix)
+  // mat4.scale(flatThreeGeometryModelMatrix,
+  //            vec3.create(threeGeometryAttributes.scaleOfFlat.xScale, threeGeometryAttributes.scaleOfFlat.yScale, 0.1),
+  //            flatThreeGeometryModelMatrix)
   const flatThreeGeometryModelMatrixBuffer = device.createBuffer({
     label: 'flatThreeGeometryModelMatrix',
     size: uniformBufferSize,
     usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-    mappedAtCreation: true
+    // mappedAtCreation: true
   })
-  new Float32Array(flatThreeGeometryModelMatrixBuffer.getMappedRange()).set(flatThreeGeometryModelMatrix as Float32Array);
-  flatThreeGeometryModelMatrixBuffer.unmap();
+  // new Float32Array(flatThreeGeometryModelMatrixBuffer.getMappedRange()).set(flatThreeGeometryModelMatrix as Float32Array);
+  // flatThreeGeometryModelMatrixBuffer.unmap();
   // #endregion
   
   // three Geometry 资源绑定
@@ -455,7 +455,7 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
   // #endregion
 
   // #region ParticlesGalaxy
-  const NUM = 5;
+  let NUM = ParticlesGalaxyAttr.num;
   const particleObj = await initParticlesGalaxy(device, canvas, format, NUM);
   
   const particlesBindingGroup = device.createBindGroup({
@@ -552,26 +552,26 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
         0,
         new Float32Array([particlesPointAttr.range[0], -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale])
     )     
-    // if(e != null && e <= 500000){  
-    //   device.queue.writeBuffer(
-    //       particlesPointObj.inputBuffer,
-    //       0,
-    //       new Float32Array([e, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale])
-    //   )     
-    // }
+    if(e != null ){  
+      device.queue.writeBuffer(
+          particlesPointObj.inputBuffer,
+          0,
+          new Float32Array([e, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale, -0.5 * scale, 0.5 * scale])
+      )     
+    }
   }
-  // particlesPoint.add(particlesPointAttr.range, '0').min(10000).max(500000).step(10000).onChange(()=>{
-  //   updataParticlesPoint(particlesPointAttr.range[0],PointAttr.scale)
-  // });
-  particlesPoint.add(particlesPointAttr, 'velocity').min(0.0001).max(0.01).step(0.00005).onChange(()=>{
+  particlesPoint.add(particlesPointAttr.range, 0).min(10000).max(16000000).step(10000).onChange(()=>{
+    updataParticlesPoint(particlesPointAttr.range[0],PointAttr.scale)
+  }).name('粒子数量');
+  particlesPoint.add(particlesPointAttr, 'velocity').min(0.0001).max(0.1).step(0.00005).onChange(()=>{
     updataParticlesPoint()
-  });
+  }).name('粒子速度');
   particlesPoint.add(PointAttr, 'radius').min(0.2).max(0.5).step(0.0001).onChange(()=>{
     updataParticlesPoint()
-  });
+  }).name('粒子移动半径');
   particlesPoint.add(PointAttr, 'scale').min(1).max(10).step(0.005).onChange((scale)=>{
     updataParticlesPoint(particlesPointAttr.range[0],PointAttr.scale)
-  });
+  }).name('缩放粒子活动范围');
 
   const particlesPointBindingGroup = device.createBindGroup({
     label: 'particlesBindingGroup',
@@ -760,17 +760,22 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
     mat4.rotateX(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     mat4.rotateY(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
     mat4.rotateZ(threeGeometryModelMatrix, timeOfdifference/threeGeometryAttributes.rotateSpeed, threeGeometryModelMatrix)
+    mat4.scale(threeGeometryModelMatrix,
+              vec3.create(threeGeometryAttributes.radiusScale,
+                          threeGeometryAttributes.radiusScale,
+                          threeGeometryAttributes.radiusScale),
+              threeGeometryModelMatrix)
     device.queue.writeBuffer(
       threeGeometryModelMatrixBuffer, 0, threeGeometryModelMatrix as Float32Array
     )
 
-    // 根据GUI更新flat模型变换矩阵s
+    // 根据GUI更新flat模型变换矩阵
     const flatThreeGeometryModelMatrix = mat4.identity();
     mat4.translate(flatThreeGeometryModelMatrix, vec3.create(0, -5, -10),flatThreeGeometryModelMatrix)
     mat4.rotateX(flatThreeGeometryModelMatrix, -Math.PI/2, flatThreeGeometryModelMatrix)
     mat4.rotateZ(flatThreeGeometryModelMatrix, -Math.PI, flatThreeGeometryModelMatrix)
     mat4.scale(flatThreeGeometryModelMatrix,
-               vec3.create(threeGeometryAttributes.scaleOfFlat.xScale, threeGeometryAttributes.scaleOfFlat.yScale, 0.1),
+               vec3.create(threeGeometryAttributes.scaleOfFlat.xScale, threeGeometryAttributes.scaleOfFlat.yScale, 1),
                flatThreeGeometryModelMatrix)
     device.queue.writeBuffer(
       flatThreeGeometryModelMatrixBuffer, 0, flatThreeGeometryModelMatrix as Float32Array
