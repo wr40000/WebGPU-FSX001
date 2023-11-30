@@ -57,7 +57,6 @@ export async function initUNIFORM(device: GPUDevice){
         const response = await fetch(
             // new URL("../../public/img/Di-3d.png", import.meta.url).toString()
             new URL("../../public/img/img1_8k.jpg", import.meta.url).toString()
-            // new URL("../../public/img/img1_8k.jpg", import.meta.url).toString()
         );
         const imageBitmap = await createImageBitmap(await response.blob());
 
@@ -75,6 +74,29 @@ export async function initUNIFORM(device: GPUDevice){
             [imageBitmap.width, imageBitmap.height]
         );
     }
+    // let cubeTextureImg_8k: GPUTexture;
+    // {
+    //     const response = await fetch(
+    //         new URL("http://139.159.253.241/images/img1_8k.jpg", location.origin).toString()
+    //     );
+
+    //     const imageBitmap = await createImageBitmap(await response.blob());
+
+    //     cubeTextureImg_8k = device.createTexture({
+    //         size: [imageBitmap.width, imageBitmap.height, 1],
+    //         format: "rgba8unorm",
+    //         usage:
+    //         GPUTextureUsage.TEXTURE_BINDING |
+    //         GPUTextureUsage.COPY_DST |
+    //         GPUTextureUsage.RENDER_ATTACHMENT,
+    //     });
+    //     device.queue.copyExternalImageToTexture(
+    //         { source: imageBitmap },
+    //         { texture: cubeTextureImg_8k },
+    //         [imageBitmap.width, imageBitmap.height]
+    //     );
+    // }
+
     let particlesTextureImg: GPUTexture;
     {
         const response = await fetch(

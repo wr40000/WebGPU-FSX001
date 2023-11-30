@@ -22,6 +22,8 @@ pnpm run dev
 
 `tips`: 因为有一张80MB的贴图，所以页面加载会慢一点
 
+![image-20231130155908275](README.assets/image-20231130155908275.png)
+
 `Thank you for Orillusion's WebGPU tutorial`
 
 脚滑的猫咪
