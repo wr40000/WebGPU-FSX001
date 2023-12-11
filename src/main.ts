@@ -975,13 +975,13 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
       passEncoder.drawIndexed(flatArrayFromThreeIndexCount)
     }
     //  银河粒子管线
-    {
-      passEncoder.setPipeline(particleObj.particlesGalaxyPipeLine);
-      passEncoder.setVertexBuffer(0, particleObj.particlesVertexBuffer);
-      passEncoder.setIndexBuffer(particleObj.particlesVertexIndexBuffer, 'uint16');
-      passEncoder.setBindGroup(0, particlesBindingGroup);
-      passEncoder.drawIndexed(particleObj.sphereCount, NUM)
-    }
+    // {
+    //   passEncoder.setPipeline(particleObj.particlesGalaxyPipeLine);
+    //   passEncoder.setVertexBuffer(0, particleObj.particlesVertexBuffer);
+    //   passEncoder.setIndexBuffer(particleObj.particlesVertexIndexBuffer, 'uint16');
+    //   passEncoder.setBindGroup(0, particlesBindingGroup);
+    //   passEncoder.drawIndexed(particleObj.sphereCount, NUM)
+    // }
     //  点粒子管线
     {
       passEncoder.setPipeline(particlesPointObj.particlesPointPipeLine);
