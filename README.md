@@ -20,12 +20,12 @@ pnpm run dev
 
 作为刚学习WebGPU的小白，代码写的及其臃肿，且下层逻辑封装的非常的牛马，导致现在更新GUI控件代码十分难受，作为自己学习WebGPU的第一个Demo也只能捏着鼻子采取最臃肿的方式暴力完成剩下的部分
 
-`tips`: 因为有一张80MB的贴图，所以页面加载会慢一点
+![image-20231211141649410](http://139.159.253.241/WebGPU/image-20231211141649410.png)
 
-![image-20231130155908275](README.assets/image-20231130155908275.png)
+![image-20231211141716459](http://139.159.253.241/WebGPU/image-20231211141716459.png)
 
-`Thank you for Orillusion's WebGPU tutorial`
+`感谢Orillusion团队提供的WebGPU`教程
 
 脚滑的猫咪
 
-![脚滑的猫咪](README.assets/%E8%84%9A%E6%BB%91%E7%9A%84%E7%8C%AB%E5%92%AA.gif)
+![脚滑的猫咪](http://139.159.253.241/WebGPU/%E8%84%9A%E6%BB%91%E7%9A%84%E7%8C%AB%E5%92%AA.gif)
