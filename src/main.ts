@@ -321,7 +321,7 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
   // #region
   // three Geometry
   const threeGeometryModelMatrix = mat4.identity();
-  mat4.translate(threeGeometryModelMatrix, vec3.create(0, 0, -10),threeGeometryModelMatrix)
+  mat4.translate(threeGeometryModelMatrix, vec3.create(-1, 0, -10),threeGeometryModelMatrix)
   mat4.scale(threeGeometryModelMatrix, vec3.create(1, 1, 1), threeGeometryModelMatrix)
   const threeGeometryModelMatrixBuffer = device.createBuffer({
     label: 'threeGeometryModelMatrixBuffer',
@@ -559,7 +559,7 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
   
   // #region ParticlesPoint
   const particlesPointObj = await initParticlesPoint(device, format, particlesPointAttr.range[0]);
-  const PointAttr = {radius: 2, scale: 1}
+  const PointAttr = {radius: 1, scale: 1}
   function updataParticlesPoint(e :number = particlesPointAttr.range[0], scale : number = PointAttr.scale){
     const particlesModelArray = new Float32Array(particlesPointAttr.range[0] * 4 * 4);
     const particlesPointColorArray = new Float32Array(particlesPointAttr.range[0] * 4);
