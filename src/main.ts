@@ -11,7 +11,7 @@ import FlatThreeGeometryFragWGSL from "./shaders/FlatThreeGeometryFragWGSL.wgsl?
 import FlatThreeGeometryVertWGSL from "./shaders/FlatThreeGeometryVertWGSL.wgsl?raw"
 import {GUIForthreeGeometry, GUIForFlatthreeGeometry, initUNIFORM, initLight }  from './util/const'
 import {stats, threeGeometryAttributes, skyBoxAttr, threeGeometry, flat, SkyBoxGui,
-        particlesPoint, particlesPointAttr, ParticlesGalaxyAttr} from './util/GUI'
+        particlesPoint, particlesPointAttr, ParticlesGalaxyAttr } from './util/GUI'
 import {initParticlesGalaxy} from './util/particlesGalaxy'
 import {initParticlesPoint} from './util/particlesPoint'
 import initShadowDepthMap from './util/shadowDepthMap'
@@ -30,6 +30,7 @@ async function run(){
   const {
           timeFrameDeferenceBuffer,
           flatElevationBuffer,
+          threejsMeshAttrForShaderBuffer,
           flatBigWavesFrequencyBuffer,
           cameraVPMatrixBuffer,
           cubeTextureImg,
@@ -209,18 +210,72 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
         vertexindexFromThree,
         vertexBufferFromThree,
         arrayFromThreeIndexCount }  = await updateThreeMesh(shape);
+  // threejsMeshAttrForShaderBuffer 控制几何体着色器显示哪个
+  device.queue.writeBuffer(
+    threejsMeshAttrForShaderBuffer,
+    0,
+    // new Float32Array([Math.abs(Math.sin(timeOfNowframe))])记得加[]
+    new Float32Array([1.0, 0.0, 0.0, 0.0,
+                       0.0, 0.0, 0.0, 0.0,
+                       0.0, 0.0, 0.0, 0.0,
+                       0.0, 0.0, 0.0, 0.0, ])
+  )
   // gui ThreeGeometry
   threeGeometry.add(GUIForthreeGeometry, 'topologyIsline_list').onChange(async ()=>{
     const updatedValues = await updateThreeMesh(shape);
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
   }).name('去除三角面');   
+  threeGeometry.add(threeGeometryAttributes, 'shaderAttr', ["图片 + 渐变 + 上一帧画面 + 阴影",  "纯图片", "图片 + 渐变 + 上一帧画面", "上一帧画面"]).onChange(async (str)=>{
+    switch (str) {
+      case "图片 + 渐变 + 上一帧画面 + 阴影":
+        console.log("图片 + 渐变 + 上一帧画面 + 阴影");      
+        device.queue.writeBuffer(
+          threejsMeshAttrForShaderBuffer,
+          0,
+          new Float32Array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, ])
+        )
+        break;
+      case "纯图片":
+        console.log("纯图片"); 
+        device.queue.writeBuffer(
+          threejsMeshAttrForShaderBuffer,
+          0,
+          new Float32Array([2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, ])
+        )
+        break;
+      case "图片 + 渐变 + 上一帧画面":
+        device.queue.writeBuffer(
+          threejsMeshAttrForShaderBuffer,
+          0,
+          new Float32Array([3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, ])
+        )
+        break;
+      case "上一帧画面":
+        device.queue.writeBuffer(
+          threejsMeshAttrForShaderBuffer,
+          0,
+          new Float32Array([4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, ])
+        )
+        break;
+      // case "随时间渐变":
+      //   device.queue.writeBuffer(
+      //     threejsMeshAttrForShaderBuffer,
+      //     0,
+      //     new Float32Array([0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0,0.0, 0.0, 0.0, 0.0, ])
+      //   )
+      //   break;
+    
+      default:
+        break;
+    }
+  }).name('几何体贴图shader');   
   // threeGeometry.add(threeGeometryAttributes, 'radiusScale').min(1).max(10).step(0.01).name('半径缩放');     
-  threeGeometry.add(threeGeometryAttributes, 'is_8k').onChange(async ()=>{
-    const updatedValues = await updateThreeMesh(shape);
-    // 在 Promise 解决后更新变量的值
-    ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
-  }).name('更换为8K贴图');  
+  // threeGeometry.add(threeGeometryAttributes, 'is_8k').onChange(async ()=>{
+  //   const updatedValues = await updateThreeMesh(shape);
+  //   // 在 Promise 解决后更新变量的值
+  //   ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
+  // }).name('更换为8K贴图');  
   threeGeometry.add(threeGeometryAttributes, 'shape', ['BoxGeometry', 'CapsuleGeometry', 'CircleGeometry', 'ConeGeometry',
   'CylinderGeometry', 'PlaneGeometry', 'RingGeometry', 'ShapeGeometry', 'SphereGeometry', 'TorusGeometry',
  'TorusKnotGeometry', 'TubeGeometry']).onChange(async (str)=>{
@@ -337,6 +392,12 @@ SkyBoxGui.add(skyBoxAttr, 'skyMap', ['水天一色', '田野', '桥']).name('天
         binding: 6,
         resource: {
           buffer: lightObj.lightViewProjectionBuffer
+        }
+      },
+      {
+        binding: 7,
+        resource: {
+          buffer: threejsMeshAttrForShaderBuffer
         }
       },
     ]

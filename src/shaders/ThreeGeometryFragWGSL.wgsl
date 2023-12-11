@@ -12,32 +12,19 @@ fn main(
     @location(2) fragNormal: vec3<f32>,
     @location(3) timeOfFrag: f32,
     @location(4) shadowPos: vec3<f32>,
+    @location(5) chooseFragmentAttr1: vec4<f32>,
+    @location(6) chooseFragmentAttr2: vec4<f32>,
 ) -> @location(0) vec4<f32> {
-    // 随时间渐变
-    // return vec4<f32>(
-    //     fragPosition.x,
-    //     fragPosition.y * timeOfFrag,
-    //     fragPosition.z,
-    //     1.0
-    //     );    
+    
   
     // 上一帧画面
-    // let texColor = textureSample(lastFrameTexture, mySampler, fragUV * 0.8 + vec2(0.1));
-    // let f = select(1.0, 0.0, length(texColor.rgb - vec3(0.5)) < 0.01);
-    // return f * texColor + (1.0 - f) * fragPosition;
-
-    // 图片 + 渐变 + 上一帧画面
-    // let texColor = textureSample(lastFrameTexture, mySampler, fragUV * 0.8 + vec2(0.1));
-    // let texColor_img = textureSample(cubeTextureImg, mySampler, fragUV * 0.8 + vec2(0.1));
-    // let f = select(1.0, 0.0, length(texColor.rgb - vec3(0.5)) < 0.01);
-    // let f_img = select(1.0, 0.0, length(texColor_img.rgb - vec3(0.5)) < 0.01);
-    // return texColor_img * timeOfFrag + (1 - timeOfFrag) * texColor;
-    
-    // 纯图片
-    // let texColor_img = textureSample(cubeTextureImg, mySampler, fragUV);
-    // return texColor_img;
-
-    // // 图片 + 渐变 + 上一帧画面 + 阴影
+    let texColor = textureSample(lastFrameTexture, mySampler, fragUV * 0.8 + vec2(0.1));
+    let f = select(1.0, 0.0, length(texColor.rgb - vec3(0.5)) < 0.01);
+    // 图片
+    let texColor_img1 = textureSample(cubeTextureImg, mySampler, fragUV * 0.8 + vec2(0.1));
+    // 图片 + UV坐标复合
+    let texColor_img = textureSample(cubeTextureImg, mySampler, fragUV);
+    // 图片 + 渐变 + 上一帧画面 + 阴影
     // Directional Light
     let diffuse: f32 = max(dot(normalize(lightPosition.xyz), fragNormal), 0.0);
     // add shadow factor
@@ -59,13 +46,36 @@ fn main(
     shadow = shadow / 9.0;
     // // ambient + diffuse * shadow
     let lightFactor = min(0.3 + shadow * diffuse, 1.0);
+    var color_mixin = texColor_img1 * timeOfFrag + (1 - timeOfFrag) * texColor;
+    
+    // let arrAttr: array<f32, 8> = [chooseFragmentAttr1.xyz, chooseFragmentAttr1.w, chooseFragmentAttr2.xyz, chooseFragmentAttr2.w];
+    for(var i = 0u; i < 4; i++){
+        let vecAttr = chooseFragmentAttr1;
+        // if(i > f32(4)){
+        //     vecAttr = chooseFragmentAttr2;
+        // };
+        if(3.5 < vecAttr.x){
+            return texColor;
+        }else if(2.5 < vecAttr.x){
+            return texColor_img1 * timeOfFrag + (1 - timeOfFrag) * texColor;
+        }else if(1.5 < vecAttr.x){
+            return texColor_img;
+        }else{
+            return lightFactor * color_mixin;
+        }
+    }
+    return texColor_img; 
+    // return vec4<f32>(fragPosition.x,fragPosition.y * timeOfFrag,fragPosition.z,1.0);    
+
     // 上一帧画面
-    let texColor = textureSample(lastFrameTexture, mySampler, fragUV * 0.8 + vec2(0.1));
-    // 图片
-    let texColor_img = textureSample(cubeTextureImg, mySampler, fragUV * 0.8 + vec2(0.1));
+    // return texColor;
 
-    var color_mixin = texColor_img * timeOfFrag + (1 - timeOfFrag) * texColor;
-    // var color_mixin = texColor_img;
+    // 图片 + 渐变 + 上一帧画面
+    // return texColor_img1 * timeOfFrag + (1 - timeOfFrag) * texColor;
+    
+    // 纯图片
+    // return texColor_img;
 
-    return lightFactor * color_mixin;
+    // 图片 + 渐变 + 上一帧画面 + 阴影
+    // return lightFactor * color_mixin;
 }

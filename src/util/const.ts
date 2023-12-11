@@ -22,6 +22,10 @@ export async function initUNIFORM(device: GPUDevice){
         size: 4 * 2,
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
     })
+    const threejsMeshAttrForShaderBuffer = device.createBuffer({
+        size: 4 * 16,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
+    })
     // 相机cameraVPMatrix矩阵
     const cameraVPMatrixBuffer = device.createBuffer({
         size: uniformBufferSize,
@@ -56,7 +60,9 @@ export async function initUNIFORM(device: GPUDevice){
     {
         const response = await fetch(
             // new URL("../../public/img/Di-3d.png", import.meta.url).toString()
-            new URL("../../public/img/img1_8k.jpg", import.meta.url).toString()
+            // new URL("../../public/img/img1_8k.jpg", import.meta.url).toString()
+            new URL("../../public/img/img1_1k.jpg", import.meta.url).toString()
+
         );
         const imageBitmap = await createImageBitmap(await response.blob());
 
@@ -122,6 +128,7 @@ export async function initUNIFORM(device: GPUDevice){
     return {timeFrameDeferenceBuffer,
         flatElevationBuffer,
         flatBigWavesFrequencyBuffer,
+        threejsMeshAttrForShaderBuffer,
         cameraVPMatrixBuffer,
         cubeTextureImg,
         cubeTextureImg_8k,

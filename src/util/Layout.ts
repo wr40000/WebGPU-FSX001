@@ -180,6 +180,13 @@ export default function initLayout(device: GPUDevice){
                     type: 'uniform',
                 }
             },
+            {
+                binding: 7,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'uniform',
+                }
+            },
         ]
         })
     const initThreeGeometryPipelineLayout = device.createPipelineLayout({

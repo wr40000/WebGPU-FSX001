@@ -4,6 +4,7 @@
 @binding(4) @group(0) var<uniform> time : f32;
 @binding(5) @group(0) var<uniform> cameraPosition : mat4x4<f32>;
 @binding(6) @group(0) var<uniform> lightProjection : mat4x4<f32>;
+@binding(7) @group(0) var<uniform> shaderAttr : mat4x4<f32>;
 
 struct VertexOutput {
     @builtin(position) Position : vec4<f32>,
@@ -12,6 +13,8 @@ struct VertexOutput {
     @location(2) fragNormal: vec3<f32>,
     @location(3) timeOfFrag: f32,
     @location(4) shadowPos: vec3<f32>,
+    @location(5) chooseFragmentAttr1: vec4<f32>,
+    @location(6) chooseFragmentAttr2: vec4<f32>
 };
 
 @vertex
@@ -28,6 +31,8 @@ fn main(
     output.fragUV = uv;
     output.fragNormal = (modelMatrix * vec4<f32>(normal, 0.0)).xyz;
     output.timeOfFrag = time;
+    output.chooseFragmentAttr1 = shaderAttr[0];
+    output.chooseFragmentAttr2 = shaderAttr[1];
 
     let posFromLight: vec4<f32> = lightProjection * modelMatrix * vec4<f32>(position, 1.0);
     // Convert shadowPos XY to (0, 1) to fit texture UV

@@ -16,7 +16,8 @@ const threeGeometryAttributes = {
     scaleOfFlat:{ xScale: 13, yScale: 13},    //flat 缩放
     isShow:true,
     is_8k:true,
-    shape: 'BoxGeometry'
+    shape: 'BoxGeometry',
+    shaderAttr: "图片 + 渐变 + 上一帧画面 + 阴影"
 }
 const sphereMesh = {
     radius: 0.01,
