@@ -85,27 +85,27 @@ export default async function initThreeMesh(
     }else if(whitchGeometry == 'CapsuleGeometry'){
         cubeOFThree = new THREE.CapsuleGeometry( 1, 1, 32, 64 )
     }else if(whitchGeometry == 'CircleGeometry'){
-        cubeOFThree = new THREE.CircleGeometry( 5, 32 );
+        cubeOFThree = new THREE.CircleGeometry( 1, 32 );
     }else if(whitchGeometry == 'ConeGeometry'){
-        cubeOFThree = new THREE.ConeGeometry( 5, 20, 32 );
+        cubeOFThree = new THREE.ConeGeometry( 1, 1, 32 );
     }else if(whitchGeometry == 'CylinderGeometry'){
-        cubeOFThree = new THREE.CylinderGeometry( 5, 5, 20, 32 );
+        cubeOFThree = new THREE.CylinderGeometry( 1, 1, 1, 32 );
     }else if(whitchGeometry == 'PlaneGeometry'){
         cubeOFThree = new THREE.PlaneGeometry( 2, 2, 192, 192 )
     }else if(whitchGeometry == 'RingGeometry'){
-        cubeOFThree = new THREE.RingGeometry( 1, 5, 32 );
+        cubeOFThree = new THREE.RingGeometry( 0.5, 1, 32 );
     }else if(whitchGeometry == 'ShapeGeometry'){
         const x = 0, y = 0;
 
         const heartShape = new THREE.Shape();
         
-        heartShape.moveTo( x + 5, y + 5 );
-        heartShape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y );
-        heartShape.bezierCurveTo( x - 6, y, x - 6, y + 7,x - 6, y + 7 );
-        heartShape.bezierCurveTo( x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19 );
-        heartShape.bezierCurveTo( x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7 );
-        heartShape.bezierCurveTo( x + 16, y + 7, x + 16, y, x + 10, y );
-        heartShape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
+        heartShape.moveTo( x + 0.5, y + 0.5 );
+        heartShape.bezierCurveTo( x + 0.5, y + 0.5, x + 0.4, y, x, y );
+        heartShape.bezierCurveTo( x - 0.6, y, x - 0.6, y + 0.7,x - 0.6, y + 0.7 );
+        heartShape.bezierCurveTo( x - 0.6, y + 1.1, x - 0.3, y + 1.54, x + 0.5, y + 1.9 );
+        heartShape.bezierCurveTo( x + 1.2, y + 1.54, x + 1.6, y + 1.1, x + 1.6, y + 0.7 );
+        heartShape.bezierCurveTo( x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y );
+        heartShape.bezierCurveTo( x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5 );
         
         cubeOFThree = new THREE.ShapeGeometry( heartShape );
     }else if(whitchGeometry == 'SphereGeometry'){
@@ -113,6 +113,7 @@ export default async function initThreeMesh(
     }else if(whitchGeometry == 'TorusGeometry'){
         cubeOFThree = new THREE.TorusGeometry( 1, 0.3, 16, 100 );
     }else if(whitchGeometry == 'TorusKnotGeometry'){
+        // 报错 无法使用
         cubeOFThree = new THREE.TorusKnotGeometry( 1, 0.3, 100, 16 );
     }
     // else if(whitchGeometry == 'TubeGeometry'){

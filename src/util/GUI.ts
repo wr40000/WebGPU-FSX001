@@ -19,6 +19,10 @@ const threeGeometryAttributes = {
     shape: 'BoxGeometry',
     shaderAttr: "图片 + 渐变 + 上一帧画面 + 阴影"
 }
+const lightAttr = {
+    pointLight:{intensity: 1.0, radius: 5},
+    directionalLight: {intensity: 0.3}
+}
 const sphereMesh = {
     radius: 0.01,
     widthSegments: 32,
@@ -31,6 +35,7 @@ const skyBoxAttr = {
 const ParticlesGalaxyAttr = {
     num: 5
 }
+
 
 const threeGeometry = gui.addFolder("几何体形状")
 threeGeometry.add(threeGeometryAttributes, 'rotateSpeed').min(5).max(100).step(0.01).name('旋转速度');
@@ -78,4 +83,4 @@ const particlesPoint = gui.addFolder("粒子")
 
 
 export {stats, threeGeometryAttributes, skyBoxAttr, threeGeometry, flat, SkyBoxGui, sphereMesh,
-     particlesPoint, particlesPointAttr, ParticlesGalaxyAttr}
+     particlesPoint, particlesPointAttr, ParticlesGalaxyAttr, lightAttr, gui}

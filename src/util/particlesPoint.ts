@@ -190,7 +190,7 @@ export async function initParticlesPoint(
     // velocityBuffer.unmap();
 
     const particlePosition = new Float32Array(
-        [0,0,0,1,0,0]
+        [0.000001,0.000001,0.000001,1,0,0]
     )
     const particlesVertexBuffer = device.createBuffer({
         size: 6 * 4,
@@ -225,8 +225,8 @@ export async function initParticlesPoint(
         const color_g = Math.random();
         const color_b = Math.random();
         const color_a = 1.0;
-        // mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
-        mat4.translate(particlesPositionMatrix,[0, 0, 0], particlesPositionMatrix)
+        mat4.translate(particlesPositionMatrix,[xOffset, yOffset, zOffset], particlesPositionMatrix)
+        // mat4.translate(particlesPositionMatrix,[0, 0, 0], particlesPositionMatrix)
         particlesModelArray.set(particlesPositionMatrix as Float32Array, i * 4 * 4)        
         particlesPointColorArray.set(new Float32Array([color_r,color_g,color_b,color_a]), i * 4)       
         particlesPointVelocityArray.set(
