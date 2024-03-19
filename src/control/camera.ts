@@ -112,7 +112,7 @@ export default class Camera {
     const getMouseMovement = (e: MouseEvent) => {
       this.mouseMovement[0] += e.movementX;
       this.mouseMovement[1] += e.movementY;
-      // console.log(this.mouseMovement);
+      console.log(e.movementX, e.movementY);
     };
   }
 

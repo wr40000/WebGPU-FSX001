@@ -50,7 +50,19 @@ export default async function initThreeMesh(
             entryPoint: 'main',
             targets: [
                 {
-                    format
+                    format,
+                    blend: {
+                        color: {
+                            srcFactor: "one",
+                            dstFactor: "one-minus-src-alpha",
+                            operation: "add"
+                        },
+                        alpha: {
+                            srcFactor: "zero",
+                            dstFactor: "zero",
+                            operation: "add"
+                        }
+                    }
                 }
             ]
         },

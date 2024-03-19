@@ -98,7 +98,7 @@ export async function initParticlesPoint(
             entryPoint: 'main',
             targets: [
                 {
-                    format
+                    format,
                 }
             ]
         },

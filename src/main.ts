@@ -239,7 +239,7 @@ async function run() {
     arrFarme
   )
   const lightGUI = gui.addFolder("灯光");
-  lightGUI.add(lightAttr.pointLight, 'intensity').min(0).max(1).step(0.001).name('点光源光强').onChange((value)=>{
+  lightGUI.add(lightAttr.pointLight, 'intensity').min(0).max(1).step(0.001).name('点光源光强').onChange((value) => {
     arrFarme[8] = value;
     device.queue.writeBuffer(
       threejsMeshAttrForShaderBuffer,
@@ -247,7 +247,7 @@ async function run() {
       arrFarme
     )
   });
-  lightGUI.add(lightAttr.pointLight, 'radius').min(0).max(10).step(0.01).name('点光源光照半径').onChange((value)=>{
+  lightGUI.add(lightAttr.pointLight, 'radius').min(0).max(10).step(0.01).name('点光源光照半径').onChange((value) => {
     arrFarme[9] = value;
     device.queue.writeBuffer(
       threejsMeshAttrForShaderBuffer,
@@ -255,7 +255,7 @@ async function run() {
       arrFarme
     )
   });;
-  lightGUI.add(lightAttr.directionalLight, 'intensity').min(0).max(1).step(0.01).name('平行光光强').onChange((value)=>{
+  lightGUI.add(lightAttr.directionalLight, 'intensity').min(0).max(1).step(0.01).name('平行光光强').onChange((value) => {
     arrFarme[15] = value;
     device.queue.writeBuffer(
       threejsMeshAttrForShaderBuffer,
@@ -830,6 +830,7 @@ async function run() {
   // #endregion
 
   let timeOfLastframe = performance.now();
+  let count = 0
   function frame() {
     const now = performance.now();
     // 更新帧数
@@ -905,7 +906,7 @@ async function run() {
     arrFarme[12] = Math.sin(now / 1500); // x
     arrFarme[14] = Math.cos(now / 1500); //z
     // console.log(arrFarme[4]);
-    
+
     device.queue.writeBuffer(
       threejsMeshAttrForShaderBuffer,
       0,
@@ -917,6 +918,10 @@ async function run() {
     // #region 更新相机位置 以及 更新相机内置的canvas宽高，否则resize失效
     camera.recalculateProjection(); // 更新相机内置的canvas宽高
     camera.updatePos();
+    count++;
+    if (count % (120 * 2) == 1) {
+      console.log(camera);
+    }
     const cameraVPMatrix = mat4.create();
     mat4.multiply(camera.projection, camera.view, cameraVPMatrix);
     const CameraVPMatrixArray = new Float32Array(cameraVPMatrix);
@@ -1004,25 +1009,12 @@ async function run() {
     }
     const passEncoder = commandEncoder.beginRenderPass(skyBoxRenderPassDescriptor);
     // 天空盒管线     
-    {        
+    {
       passEncoder.setPipeline(SkyBoxObj.skyBoxPipeline);
       passEncoder.setVertexBuffer(0, SkyBoxObj.skyBoxVerticesBuffer);
       passEncoder.setBindGroup(0, skyBoxAttr.skyMap == '水天一色' ? SkyBoxBindingGroup :
         (skyBoxAttr.skyMap == '田野' ? SkyBoxBindingGroupforskyBoxmapTexture2 : SkyBoxBindingGroupforskyBoxmapTexture3));
       passEncoder.draw(SkyBoxObj.cubeVertexCount, 1, 0, 0);
-    }
-
-    // Three Geometry 管线
-    {
-      passEncoder.setPipeline(ThreeGeometryPipeline);
-      passEncoder.setVertexBuffer(0, vertexBufferFromThree);
-      passEncoder.setIndexBuffer(vertexindexFromThree, 'uint16');
-      passEncoder.setBindGroup(0, threeGeometryBindingGroup1);
-      passEncoder.setBindGroup(1, threeGeometryAttributes.is_8k ? flatThreeGeometryBindingGroup2for8K : flatThreeGeometryBindingGroup2);
-      // passEncoder.setBindGroup(2, threeGeometryBindingGroup2);
-      if (threeGeometryAttributes.isShow) {
-        passEncoder.drawIndexed(arrayFromThreeIndexCount)
-      }
     }
     // Three flat Geometry 管线
     {
@@ -1047,6 +1039,18 @@ async function run() {
       passEncoder.setVertexBuffer(0, particlesPointObj.particlesVertexBuffer);
       passEncoder.setBindGroup(0, particlesPointBindingGroup);
       passEncoder.drawIndexed(1, particlesPointAttr.range[0])
+    };
+    // Three Geometry 管线
+    {
+      passEncoder.setPipeline(ThreeGeometryPipeline);
+      passEncoder.setVertexBuffer(0, vertexBufferFromThree);
+      passEncoder.setIndexBuffer(vertexindexFromThree, 'uint16');
+      passEncoder.setBindGroup(0, threeGeometryBindingGroup1);
+      passEncoder.setBindGroup(1, threeGeometryAttributes.is_8k ? flatThreeGeometryBindingGroup2for8K : flatThreeGeometryBindingGroup2);
+      // passEncoder.setBindGroup(2, threeGeometryBindingGroup2);
+      if (threeGeometryAttributes.isShow) {
+        passEncoder.drawIndexed(arrayFromThreeIndexCount)
+      }
     }
 
     passEncoder.end();
