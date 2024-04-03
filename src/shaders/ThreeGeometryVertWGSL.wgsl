@@ -5,7 +5,7 @@
 @binding(5) @group(0) var<uniform> cameraPosition : mat4x4<f32>;
 @binding(6) @group(0) var<uniform> lightProjection : mat4x4<f32>;
 @binding(7) @group(0) var<uniform> shaderAttr : mat4x4<f32>;
-
+@group(0) @binding(10) var<uniform> cameraPos : vec4<f32>;
 struct VertexOutput {
     @builtin(position) Position : vec4<f32>,
     @location(0) fragUV : vec2<f32>,
@@ -16,7 +16,8 @@ struct VertexOutput {
     @location(5) chooseFragmentAttr1: vec4<f32>,
     @location(6) chooseFragmentAttr2: vec4<f32>,
     @location(7) chooseFragmentAttr3: vec4<f32>,
-    @location(8) chooseFragmentAttr4: vec4<f32>
+    @location(8) chooseFragmentAttr4: vec4<f32>,
+    @location(9) cameraPos_: vec4<f32>
 };
 
 @vertex
@@ -38,14 +39,16 @@ fn main(
     // chatGPT: 在变换后对 output.fragNormal 进行归一化，以解决非等比缩放
     output.fragNormal = normalize((modelMatrix * vec4<f32>(normal, 0.0)).xyz);
     output.timeOfFrag = time;
-    output.chooseFragmentAttr1 = shaderAttr[0];
+    output.chooseFragmentAttr1 = shaderAttr[0]; 
     output.chooseFragmentAttr2 = shaderAttr[1];
     output.chooseFragmentAttr3 = shaderAttr[2];
     output.chooseFragmentAttr4 = shaderAttr[3];
+    output.cameraPos_ = cameraPos;
 
     let posFromLight: vec4<f32> = lightProjection * modelMatrix * vec4<f32>(position, 1.0);
     // Convert shadowPos XY to (0, 1) to fit texture UV
     output.shadowPos = vec3<f32>(posFromLight.xy * vec2<f32>(0.5, -0.5)
                      + vec2<f32>(0.5, 0.5), posFromLight.z);
+
     return output;
 }

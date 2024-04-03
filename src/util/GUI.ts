@@ -16,8 +16,8 @@ const threeGeometryAttributes = {
     scaleOfFlat:{ xScale: 13, yScale: 13},    //flat 缩放
     isShow:true,
     is_8k:true,
-    shape: 'BoxGeometry',
-    shaderAttr: "图片 + 渐变 + 上一帧画面 + 阴影"
+    shape: 'SphereGeometry',
+    shaderAttr: "采样天空盒"
 }
 const lightAttr = {
     pointLight:{intensity: 1.0, radius: 5},

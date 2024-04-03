@@ -221,7 +221,7 @@ async function run() {
     // 在 Promise 解决后更新变量的值
     ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
   }).name('去除三角面');
-  let chooseTexture = 2.0
+  let chooseTexture = 5.0
 
   // 光源
   let arrFarme = new Float32Array(
@@ -264,7 +264,13 @@ async function run() {
     )
   });;
 
-  threeGeometry.add(threeGeometryAttributes, 'shaderAttr', ["图片 + 阴影", "图片 + 渐变 + 上一帧画面 + 阴影", "图片 + 渐变 + 上一帧画面", "上一帧画面"]).onChange(async (str) => {
+  threeGeometry.add(threeGeometryAttributes, 'shaderAttr', [
+    "采样天空盒",
+    "图片 + 阴影",
+    "上一帧画面",
+    "图片 + 渐变 + 上一帧画面 + 阴影",
+    "图片 + 渐变 + 上一帧画面",
+  ]).onChange(async (str) => {
     switch (str) {
       case "图片 + 渐变 + 上一帧画面 + 阴影":
         chooseTexture = 1.0
@@ -298,6 +304,14 @@ async function run() {
           0,
           arrFarme)
         break;
+      case "采样天空盒":
+        chooseTexture = 5.0
+        arrFarme = await new Float32Array([chooseTexture, ...arrFarme.slice(1, 15)])
+        device.queue.writeBuffer(
+          threejsMeshAttrForShaderBuffer,
+          0,
+          arrFarme)
+        break;
       // case "随时间渐变":
       //   device.queue.writeBuffer(
       //     threejsMeshAttrForShaderBuffer,
@@ -316,19 +330,29 @@ async function run() {
   //   // 在 Promise 解决后更新变量的值
   //   ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
   // }).name('更换为8K贴图');  
-  threeGeometry.add(threeGeometryAttributes, 'shape', ['BoxGeometry-立方体', 'CapsuleGeometry-胶囊', 'CircleGeometry-圆形', 'ConeGeometry-圆锥',
-    'CylinderGeometry-圆柱', 'PlaneGeometry-平面', 'RingGeometry-圆环', 'ShapeGeometry-心形', 'SphereGeometry-球', 'TorusGeometry-甜甜圈',
-    'TorusKnotGeometry-圆环结']).onChange(async (str) => {
-      // 'TubeGeometry-管状几何体'
-      str = str.split('-')[0]
-      const updatedValues = await updateThreeMesh(str);
-      // 在 Promise 解决后更新变量的值
-      // vertexindexFromThree, vertexBufferFromThree, arrayFromThreeIndexCount
-      ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
-      arrayFromThreeIndexCount = updatedValues.arrayFromThreeIndexCount
-      vertexBufferFromThree = updatedValues.vertexBufferFromThree
-      vertexindexFromThree = updatedValues.vertexindexFromThree
-    }).name('更换Three模型');
+  threeGeometry.add(threeGeometryAttributes, 'shape', [
+    'BoxGeometry',
+    'SphereGeometry',
+    'CapsuleGeometry',
+    'CircleGeometry',
+    'ConeGeometry',
+    'CylinderGeometry',
+    'PlaneGeometry',
+    'RingGeometry',
+    'ShapeGeometry',
+    'TorusGeometry',
+    'TorusKnotGeometry'
+  ]).onChange(async (str) => {
+    // 'TubeGeometry-管状几何体'
+    str = str.split('-')[0]
+    const updatedValues = await updateThreeMesh(str);
+    // 在 Promise 解决后更新变量的值
+    // vertexindexFromThree, vertexBufferFromThree, arrayFromThreeIndexCount
+    ThreeGeometryPipeline = updatedValues.ThreeGeometryPipeline
+    arrayFromThreeIndexCount = updatedValues.arrayFromThreeIndexCount
+    vertexBufferFromThree = updatedValues.vertexBufferFromThree
+    vertexindexFromThree = updatedValues.vertexindexFromThree
+  }).name('更换Three模型');
 
   // 调用initThreeMesh  更新flatThreeGeometry                                                
   const updateFlatThreeMesh = async () => {
@@ -443,6 +467,22 @@ async function run() {
           buffer: threejsMeshAttrForShaderBuffer
         }
       },
+      {
+        binding: 8,
+        resource: SkyBoxObj.sampler,
+      },
+      {
+        binding: 9,
+        resource: SkyBoxObj.skyBoxmapTexture.createView({
+          dimension: "cube",
+        }),
+      },
+      {
+        binding: 10,
+        resource: {
+          buffer: lightObj.cameraPositionBuffer
+        }
+      },
     ]
   })
   // flat
@@ -518,6 +558,18 @@ async function run() {
         binding: 5,
         resource: SkyBoxObj.sampler,
       },
+      {
+        binding: 6,
+        resource: SkyBoxObj.skyBoxmapTexture.createView({
+          dimension: "cube",
+        }),
+      },
+      {
+        binding: 7,
+        resource: {
+          buffer: lightObj.cameraPositionBuffer
+        }
+      },
     ]
   })
   const flatThreeGeometryBindingGroup2for8K = device.createBindGroup({
@@ -551,6 +603,18 @@ async function run() {
       {
         binding: 5,
         resource: SkyBoxObj.sampler,
+      },
+      {
+        binding: 6,
+        resource: SkyBoxObj.skyBoxmapTexture.createView({
+          dimension: "cube",
+        }),
+      },
+      {
+        binding: 7,
+        resource: {
+          buffer: lightObj.cameraPositionBuffer
+        }
       },
     ]
   })
@@ -918,9 +982,16 @@ async function run() {
     // #region 更新相机位置 以及 更新相机内置的canvas宽高，否则resize失效
     camera.recalculateProjection(); // 更新相机内置的canvas宽高
     camera.updatePos();
+    device.queue.writeBuffer(
+      lightObj.cameraPositionBuffer,
+      0,
+      // new Float32Array([Math.abs(Math.sin(timeOfNowframe))])记得加[]
+      new Float32Array([camera.position[0], camera.position[1], camera.position[2], 0])
+    )
+    // console.log(camera.position);
+
     count++;
     if (count % (120 * 2) == 1) {
-      console.log(camera);
     }
     const cameraVPMatrix = mat4.create();
     mat4.multiply(camera.projection, camera.view, cameraVPMatrix);

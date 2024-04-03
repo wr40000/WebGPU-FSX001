@@ -1,5 +1,7 @@
 // initialize webgpu device & config canvas context
 export default async function initWebGPU(canvas: HTMLCanvasElement) {
+    console.log(navigator);
+    
     if(!navigator.gpu)
         throw new Error('Not Support WebGPU')
     const adapter = await navigator.gpu.requestAdapter()

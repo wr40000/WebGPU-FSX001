@@ -6,6 +6,7 @@
 @binding(4) @group(0) var<uniform> time : f32;
 @binding(0) @group(1) var<uniform> flatElevation : f32;
 @binding(1) @group(1) var<uniform> uBigWavesFrequency : vec2<f32>;
+@group(1) @binding(7) var<uniform> cameraPos : vec4<f32>;
 
 struct VertexOutput {
     @builtin(position) Position : vec4<f32>,
@@ -14,6 +15,7 @@ struct VertexOutput {
     @location(2) fragNormal: vec3<f32>,
     @location(3) timeOfFrag: f32,
     @location(4) shadowPos: vec3<f32>,
+    @location(5) cameraPos_: vec4<f32>
 };
 
 @vertex
@@ -35,10 +37,11 @@ fn main(
     
     let posFromCamera = viewprojectMatrix * pos;
     output.Position = posFromCamera;
-    output.fragPosition = posFromCamera;
+    output.fragPosition = pos;
     output.fragUV = uv;
     output.fragNormal = (modelMatrix * vec4<f32>(normal, 0.0)).xyz;
     output.timeOfFrag = time;
+    output.cameraPos_ = cameraPos;
 
     let posFromLight: vec4<f32> = lightProjection * modelMatrix * vec4<f32>(position, 1.0);
 // Convert shadowPos XY to (0, 1) to fit texture UV

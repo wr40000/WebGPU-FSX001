@@ -149,6 +149,11 @@ export async function initLight(device: GPUDevice,size:{height:number,width:numb
         size: 4 * 4 * 4, // 4 x 4 x float32
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     })
+    const cameraPositionBuffer = device.createBuffer({
+        label: 'GPUBuffer for light projection',
+        size: 4 * 4, // 4 x 4 x float32
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    })
     // dir light, 4 position
     // const lightPosition = vec3.fromValues(0, 10, -10)
     // const up = vec3.fromValues(0, 0, 1)
@@ -175,7 +180,8 @@ export async function initLight(device: GPUDevice,size:{height:number,width:numb
         lightPositionBuffer,
         lightViewProjectionBuffer,
         lightViewProjectionMatrix,
-        lightViewOrthoMatrix
+        lightViewOrthoMatrix,
+        cameraPositionBuffer
     }
 
     return lightObj

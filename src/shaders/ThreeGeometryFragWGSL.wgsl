@@ -4,6 +4,9 @@
 @binding(2) @group(1) var cubeTextureImg: texture_2d<f32>;
 @binding(3) @group(1) var shadowMap: texture_depth_2d;
 @binding(4) @group(1)  var shadowSampler: sampler_comparison;
+// cubemap
+@group(0) @binding(8) var mySamplerCube: sampler;
+@group(0) @binding(9) var myTexture: texture_cube<f32>;
 
 @fragment
 fn main(
@@ -15,9 +18,16 @@ fn main(
     @location(5) chooseFragmentAttr1: vec4<f32>,
     @location(6) chooseFragmentAttr2: vec4<f32>,
     @location(7) chooseFragmentAttr3: vec4<f32>,
-    @location(8) chooseFragmentAttr4: vec4<f32>
+    @location(8) chooseFragmentAttr4: vec4<f32>,
+    @location(9) cameraPos_: vec4<f32>
 ) -> @location(0) vec4<f32> {    
-    // 上一帧画面
+
+    // 反射向量 --采样天空盒纹理 output.Position  cameraPos  modelMatrix * vec4<f32>(normal,1.0)
+    var texCube = textureSample(myTexture, mySamplerCube, reflect(fragPosition - cameraPos_.xyz, fragNormal) - vec3(0.5));
+    // var cubemapVec = vec_sampler.xyz - vec3(0.5);
+    // var vec_sampler = (fragPosition - cameraPos_.xyz) *  2 * fragNormal * fragNormal - (fragPosition - cameraPos_.xyz);
+
+    // 上一帧画面a
     let texColor = textureSample(lastFrameTexture, mySampler, fragUV * 0.8 + vec2(0.1));
     let f = select(1.0, 0.0, length(texColor.rgb - vec3(0.5)) < 0.01);
     // 图片
@@ -87,10 +97,10 @@ fn main(
 
     for(var i = 0u; i < 4; i++){
         let vecAttr = chooseFragmentAttr1;
-        // if(i > f32(4)){
-        //     vecAttr = chooseFragmentAttr2;
-        // };
-        if(3.5 < vecAttr.x){
+        if(4.0 < vecAttr.x){
+            return texCube;
+
+        }else if(3.5 < vecAttr.x){
             return texColor;
         }else if(2.5 < vecAttr.x){
             return texColor_img1 * timeOfFrag + (1 - timeOfFrag) * texColor;

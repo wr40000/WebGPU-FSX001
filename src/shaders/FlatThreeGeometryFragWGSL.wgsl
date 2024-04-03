@@ -4,6 +4,8 @@
 @group(1) @binding(3) var shadowMap: texture_depth_2d;
 @group(1) @binding(4) var shadowSampler: sampler_comparison;
 @group(1) @binding(5) var imgSampler: sampler;
+// cubemap
+@group(1) @binding(6) var myTexture: texture_cube<f32>;
 
 @fragment
 fn main(
@@ -12,7 +14,9 @@ fn main(
     @location(2) fragNormal: vec3<f32>,
     @location(3) timeOfFrag: f32,
     @location(4) shadowPos: vec3<f32>,
+    @location(5) cameraPos_: vec4<f32>
 ) -> @location(0) vec4<f32> {
+    var texCube = textureSample(myTexture, imgSampler, reflect(fragInPosition.xyz - cameraPos_.xyz, fragNormal) - vec3(0.5));
     // Directional Light
     let diffuse: f32 = max(dot(normalize(lightPosition.xyz), fragNormal), 0.0);
     // add shadow factor
@@ -35,7 +39,7 @@ fn main(
     // // ambient + diffuse * shadow
     let lightFactor = min(0.3 + shadow * diffuse, 1.0);
     // return vec4<f32>(lightFactor * vec3<f32>(fragUV,1.0), 1.0);
-    return vec4<f32>(lightFactor * vec3<f32>(fragUV,1.0), 1.0);
+    return vec4<f32>(lightFactor * texCube.xyz, 1.0);
     // let textureImgColor = textureSample(textureImg,imgSampler, fragUV);
     // return vec4<f32>(lightFactor * textureImgColor.xyz, 1.0);
 }
